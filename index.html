@@ -31,18 +31,14 @@
             center: { lat: -34.397, lng: 150.644},
             zoom: 8
         };
-        var map = new google.maps.Map(document.getElementById('map-canvas'),
-                mapOptions);
+        var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
         google.maps.event.addListenerOnce(map, 'idle', function(){
             var LocationUtil = new wm.Markers(map, {
-                createMarkerFn: function(cluster) {
+                createMarker: function(cluster) {
                     return new google.maps.Marker();
                 },
-                updateClusterFn: function(cluster) {
-
-                },
-                createPolylineFn: function() {
+                createPolyline: function() {
                     return new google.maps.Polyline()
                 }
             });
