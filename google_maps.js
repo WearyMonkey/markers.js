@@ -169,7 +169,7 @@ google.maps.CircleOptions = function() {};
 /**
  * @type {google.maps.LatLng}
  */
-google.maps.CircleOptions.prototype.center;
+google.maps.CircleOptions.prototype._center;
 
 /**
  * @type {boolean}
@@ -199,7 +199,7 @@ google.maps.CircleOptions.prototype.fillOpacity;
 /**
  * @type {google.maps.Map}
  */
-google.maps.CircleOptions.prototype.map;
+google.maps.CircleOptions.prototype._map;
 
 /**
  * @type {number}
@@ -367,7 +367,7 @@ google.maps.Data.DataOptions = function() {};
 /**
  * @type {google.maps.Map}
  */
-google.maps.Data.DataOptions.prototype.map;
+google.maps.Data.DataOptions.prototype._map;
 
 /**
  * @type {google.maps.Data.StylingFunction|google.maps.Data.StyleOptions|Object.<string>}
@@ -442,7 +442,7 @@ google.maps.Data.FeatureOptions.prototype.geometry;
 /**
  * @type {number|string}
  */
-google.maps.Data.FeatureOptions.prototype.id;
+google.maps.Data.FeatureOptions.prototype._id;
 
 /**
  * @type {Object}
@@ -1019,7 +1019,7 @@ google.maps.DirectionsRendererOptions.prototype.infoWindow;
 /**
  * @type {google.maps.Map}
  */
-google.maps.DirectionsRendererOptions.prototype.map;
+google.maps.DirectionsRendererOptions.prototype._map;
 
 /**
  * @type {google.maps.MarkerOptions|Object.<string>}
@@ -1154,7 +1154,7 @@ google.maps.DirectionsRoute = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.DirectionsRoute.prototype.bounds;
+google.maps.DirectionsRoute.prototype._bounds;
 
 /**
  * @type {string}
@@ -1245,7 +1245,7 @@ google.maps.DirectionsStep.prototype.instructions;
 /**
  * @type {Array<google.maps.LatLng>}
  */
-google.maps.DirectionsStep.prototype.path;
+google.maps.DirectionsStep.prototype._path;
 
 /**
  * @type {google.maps.LatLng}
@@ -1574,7 +1574,7 @@ google.maps.FusionTablesLayerOptions.prototype.heatmap;
 /**
  * @type {google.maps.Map}
  */
-google.maps.FusionTablesLayerOptions.prototype.map;
+google.maps.FusionTablesLayerOptions.prototype._map;
 
 /**
  * @type {google.maps.FusionTablesQuery}
@@ -1806,7 +1806,7 @@ google.maps.GeocoderGeometry = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.GeocoderGeometry.prototype.bounds;
+google.maps.GeocoderGeometry.prototype._bounds;
 
 /**
  * @type {google.maps.LatLng}
@@ -1846,7 +1846,7 @@ google.maps.GeocoderRequest.prototype.address;
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.GeocoderRequest.prototype.bounds;
+google.maps.GeocoderRequest.prototype._bounds;
 
 /**
  * @type {google.maps.GeocoderComponentRestrictions}
@@ -1969,7 +1969,7 @@ google.maps.GroundOverlayOptions.prototype.clickable;
 /**
  * @type {google.maps.Map}
  */
-google.maps.GroundOverlayOptions.prototype.map;
+google.maps.GroundOverlayOptions.prototype._map;
 
 /**
  * @type {number}
@@ -2276,7 +2276,7 @@ google.maps.KmlFeatureData.prototype.description;
 /**
  * @type {string}
  */
-google.maps.KmlFeatureData.prototype.id;
+google.maps.KmlFeatureData.prototype._id;
 
 /**
  * @type {string}
@@ -2397,7 +2397,7 @@ google.maps.KmlLayerOptions.prototype.clickable;
 /**
  * @type {google.maps.Map}
  */
-google.maps.KmlLayerOptions.prototype.map;
+google.maps.KmlLayerOptions.prototype._map;
 
 /**
  * @type {boolean}
@@ -2925,7 +2925,7 @@ google.maps.MapOptions.prototype.backgroundColor;
 /**
  * @type {google.maps.LatLng}
  */
-google.maps.MapOptions.prototype.center;
+google.maps.MapOptions.prototype._center;
 
 /**
  * @type {boolean}
@@ -3070,7 +3070,7 @@ google.maps.MapOptions.prototype.tilt;
 /**
  * @type {number}
  */
-google.maps.MapOptions.prototype.zoom;
+google.maps.MapOptions.prototype._zoom;
 
 /**
  * @type {boolean}
@@ -3524,7 +3524,7 @@ google.maps.MarkerOptions.prototype.icon;
 /**
  * @type {google.maps.Map|google.maps.StreetViewPanorama}
  */
-google.maps.MarkerOptions.prototype.map;
+google.maps.MarkerOptions.prototype._map;
 
 /**
  * @type {number}
@@ -3594,7 +3594,7 @@ google.maps.MaxZoomResult.prototype.status;
 /**
  * @type {number}
  */
-google.maps.MaxZoomResult.prototype.zoom;
+google.maps.MaxZoomResult.prototype._zoom;
 
 /**
  * @constructor
@@ -3704,7 +3704,7 @@ google.maps.PathElevationRequest = function() {};
 /**
  * @type {Array<google.maps.LatLng>}
  */
-google.maps.PathElevationRequest.prototype.path;
+google.maps.PathElevationRequest.prototype._path;
 
 /**
  * @type {number}
@@ -3773,7 +3773,7 @@ google.maps.PolyMouseEvent.prototype.edge;
 /**
  * @type {number}
  */
-google.maps.PolyMouseEvent.prototype.path;
+google.maps.PolyMouseEvent.prototype._path;
 
 /**
  * @type {number}
@@ -3903,7 +3903,7 @@ google.maps.PolygonOptions.prototype.geodesic;
 /**
  * @type {google.maps.Map}
  */
-google.maps.PolygonOptions.prototype.map;
+google.maps.PolygonOptions.prototype._map;
 
 /**
  * @type {google.maps.MVCArray<google.maps.MVCArray<google.maps.LatLng>>|google.maps.MVCArray<google.maps.LatLng>|Array<Array<google.maps.LatLng|google.maps.LatLngLiteral>>|Array<google.maps.LatLng|google.maps.LatLngLiteral>}
@@ -4046,12 +4046,12 @@ google.maps.PolylineOptions.prototype.icons;
 /**
  * @type {google.maps.Map}
  */
-google.maps.PolylineOptions.prototype.map;
+google.maps.PolylineOptions.prototype._map;
 
 /**
  * @type {google.maps.MVCArray<google.maps.LatLng>|Array<google.maps.LatLng|google.maps.LatLngLiteral>}
  */
-google.maps.PolylineOptions.prototype.path;
+google.maps.PolylineOptions.prototype._path;
 
 /**
  * @type {string}
@@ -4178,7 +4178,7 @@ google.maps.RectangleOptions = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.RectangleOptions.prototype.bounds;
+google.maps.RectangleOptions.prototype._bounds;
 
 /**
  * @type {boolean}
@@ -4208,7 +4208,7 @@ google.maps.RectangleOptions.prototype.fillOpacity;
 /**
  * @type {google.maps.Map}
  */
-google.maps.RectangleOptions.prototype.map;
+google.maps.RectangleOptions.prototype._map;
 
 /**
  * @type {string}
@@ -4861,7 +4861,7 @@ google.maps.Symbol.prototype.fillOpacity;
 /**
  * @type {google.maps.SymbolPath|string}
  */
-google.maps.Symbol.prototype.path;
+google.maps.Symbol.prototype._path;
 
 /**
  * @type {number}
@@ -5379,7 +5379,7 @@ google.maps.adsense.AdUnitOptions.prototype.format;
 /**
  * @type {google.maps.Map}
  */
-google.maps.adsense.AdUnitOptions.prototype.map;
+google.maps.adsense.AdUnitOptions.prototype._map;
 
 /**
  * @type {google.maps.ControlPosition}
@@ -5489,7 +5489,7 @@ google.maps.drawing.DrawingManagerOptions.prototype.drawingMode;
 /**
  * @type {google.maps.Map}
  */
-google.maps.drawing.DrawingManagerOptions.prototype.map;
+google.maps.drawing.DrawingManagerOptions.prototype._map;
 
 /**
  * @type {google.maps.MarkerOptions|Object.<string>}
@@ -5797,7 +5797,7 @@ google.maps.panoramio.PanoramioLayerOptions.prototype.clickable;
 /**
  * @type {google.maps.Map}
  */
-google.maps.panoramio.PanoramioLayerOptions.prototype.map;
+google.maps.panoramio.PanoramioLayerOptions.prototype._map;
 
 /**
  * @type {boolean}
@@ -5888,7 +5888,7 @@ google.maps.places.AutocompleteOptions = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.AutocompleteOptions.prototype.bounds;
+google.maps.places.AutocompleteOptions.prototype._bounds;
 
 /**
  * @type {google.maps.places.ComponentRestrictions}
@@ -5957,7 +5957,7 @@ google.maps.places.AutocompletionRequest = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.AutocompletionRequest.prototype.bounds;
+google.maps.places.AutocompletionRequest.prototype._bounds;
 
 /**
  * @type {google.maps.places.ComponentRestrictions}
@@ -6233,7 +6233,7 @@ google.maps.places.PlaceSearchRequest = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.PlaceSearchRequest.prototype.bounds;
+google.maps.places.PlaceSearchRequest.prototype._bounds;
 
 /**
  * @type {string}
@@ -6390,7 +6390,7 @@ google.maps.places.QueryAutocompletionRequest = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.QueryAutocompletionRequest.prototype.bounds;
+google.maps.places.QueryAutocompletionRequest.prototype._bounds;
 
 /**
  * @type {string}
@@ -6420,7 +6420,7 @@ google.maps.places.RadarSearchRequest = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.RadarSearchRequest.prototype.bounds;
+google.maps.places.RadarSearchRequest.prototype._bounds;
 
 /**
  * @type {string}
@@ -6489,7 +6489,7 @@ google.maps.places.SearchBoxOptions = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.SearchBoxOptions.prototype.bounds;
+google.maps.places.SearchBoxOptions.prototype._bounds;
 
 /**
  * @interface
@@ -6499,7 +6499,7 @@ google.maps.places.TextSearchRequest = function() {};
 /**
  * @type {google.maps.LatLngBounds}
  */
-google.maps.places.TextSearchRequest.prototype.bounds;
+google.maps.places.TextSearchRequest.prototype._bounds;
 
 /**
  * @type {google.maps.LatLng|google.maps.LatLngLiteral}
@@ -6637,7 +6637,7 @@ google.maps.visualization.DynamicMapsEngineLayerOptions.prototype.layerKey;
 /**
  * @type {google.maps.Map}
  */
-google.maps.visualization.DynamicMapsEngineLayerOptions.prototype.map;
+google.maps.visualization.DynamicMapsEngineLayerOptions.prototype._map;
 
 /**
  * @type {string}
@@ -6801,7 +6801,7 @@ google.maps.visualization.HeatmapLayerOptions.prototype.gradient;
 /**
  * @type {google.maps.Map}
  */
-google.maps.visualization.HeatmapLayerOptions.prototype.map;
+google.maps.visualization.HeatmapLayerOptions.prototype._map;
 
 /**
  * @type {number}
@@ -6948,7 +6948,7 @@ google.maps.visualization.MapsEngineLayerOptions.prototype.layerKey;
 /**
  * @type {google.maps.Map}
  */
-google.maps.visualization.MapsEngineLayerOptions.prototype.map;
+google.maps.visualization.MapsEngineLayerOptions.prototype._map;
 
 /**
  * @type {string}
@@ -7219,7 +7219,7 @@ google.maps.weather.WeatherLayerOptions.prototype.labelColor;
 /**
  * @type {google.maps.Map}
  */
-google.maps.weather.WeatherLayerOptions.prototype.map;
+google.maps.weather.WeatherLayerOptions.prototype._map;
 
 /**
  * @type {boolean}
