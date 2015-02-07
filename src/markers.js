@@ -48,6 +48,7 @@ wmu.extend(Markers.prototype, {
             this._clusterRoot.addPoints(line._points);
         }
         this._clusterRoot.addLine(line);
+        resetViewport(this);
         return line;
     },
 
@@ -57,27 +58,32 @@ wmu.extend(Markers.prototype, {
         if (options && options.removePoints === true) {
             this._clusterRoot.removePoints(line._points);
         }
+        resetViewport(this);
     },
 
     addPoint: function(point) {
         point = Point(point);
         this._clusterRoot.addPoints([point]);
+        resetViewport(this);
         return point;
     },
 
     removePoint: function(point) {
         this._clusterRoot.removePoints([point]);
+        resetViewport(this);
     },
 
     addPoints: function(points) {
         var wmPoints = [];
         for (var i = 0; i < points.length; ++i) wmPoints.push(Point(points[i]));
         this._clusterRoot.addPoint(wmPoints);
+        resetViewport(this);
         return wmPoints;
     },
 
     removePoints: function(points) {
         this._clusterRoot.removePoints(points);
+        resetViewport(this);
     },
 
     destroy: function() {
