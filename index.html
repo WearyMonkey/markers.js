@@ -44,13 +44,15 @@
                 }
             });
 
-            LocationUtil.addLine(wm.Line([
+            var line = LocationUtil.addLine([
                 new google.maps.LatLng(-27.4679, 153.0278),
                 new google.maps.LatLng(-33.86, 151.2094),
                 new google.maps.LatLng(-33.9167, 151.2500),
                 new google.maps.LatLng(-33.9121, 151.2629),
                 new google.maps.LatLng(-33.9461, 151.1772)
-            ]), {addPoints: true});
+            ], {addPoints: true});
+
+            //LocationUtil.removeLine(line, {removePoints: true});
         });
 
 
