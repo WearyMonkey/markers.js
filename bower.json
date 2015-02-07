@@ -1,5 +1,5 @@
 {
-  "name": "cluster",
+  "name": "animated-marker-clusters",
   "version": "0.0.0",
   "authors": [
     "toby <toby.rahilly@gmail.com>"
@@ -12,9 +12,5 @@
     "bower_components",
     "test",
     "tests"
-  ],
-  "dependencies": {
-    "lodash": "~3.1.0",
-    "jquery": "~2.1.3"
-  }
+  ]
 }
