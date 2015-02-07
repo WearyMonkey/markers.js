@@ -4,22 +4,22 @@
     <meta charset="UTF-8">
     <title></title>
     <style type="text/css">
-        html, body, #map-canvas { height: 100%; margin: 0; padding: 0;}
+        html, body, #map { height: 100%; margin: 0; padding: 0;}
     </style>
+    <link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.5/mapbox.css' rel='stylesheet' />
+    <script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.5/mapbox.js'></script>
 </head>
 <body>
 
-<div id="map-canvas"></div>
+<div id="map"></div>
 
 <script>
     window.wm = {};
 </script>
 
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPBRMfttHc522RD5kOuXwAXa2aIjC_j_U">
-</script>
 
 <script type="text/javascript" src="lib/utils.js"></script>
-<script type="text/javascript" src="lib/google.js"></script>
+<script type="text/javascript" src="lib/mapbox.js"></script>
 <script type="text/javascript" src="lib/point.js"></script>
 <script type="text/javascript" src="lib/line.js"></script>
 <script type="text/javascript" src="lib/cluster.js"></script>
@@ -28,38 +28,60 @@
 
 
 <script>
-    function initialize() {
-        var mapOptions = {
-            center: { lat: -34.397, lng: 150.644},
-            zoom: 8
-        };
-        var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    L.mapbox.accessToken = 'pk.eyJ1Ijoid2Vhcnltb25rZXkiLCJhIjoiT1FwMnFrRSJ9.S_x0lt1SAs--0W0tVTkJtw';
+    var map = L.mapbox.map('map', 'examples.map-i86nkdio')
+            .setView([-34.397, 150.644], 8)
+            .on('ready', function () {
+                var LocationUtil = new wm.Markers(map, {
+                    createMarker: function (cluster) {
+                        return L.marker();
+                    },
+                    createPolyline: function () {
+                        return L.polyline([]);
+                    },
+                    mapConnector: wm.mapConnectors.mapBox
+                });
 
-        google.maps.event.addListenerOnce(map, 'idle', function(){
-            var LocationUtil = new wm.Markers(map, {
-                createMarker: function(cluster) {
-                    return new google.maps.Marker();
-                },
-                createPolyline: function() {
-                    return new google.maps.Polyline()
-                },
-                mapConnector: wm.mapConnectors.google
+                var line = LocationUtil.addLine([
+                    L.latLng(-27.4679, 153.0278),
+                    L.latLng(-33.86, 151.2094),
+                    L.latLng(-33.9167, 151.2500),
+                    L.latLng(-33.9121, 151.2629),
+                    L.latLng(-33.9461, 151.1772)
+                ], {addPoints: true});
+
+//                LocationUtil.removeLine(line, {removePoints: true});
             });
 
-            var line = LocationUtil.addLine([
-                new google.maps.LatLng(-27.4679, 153.0278),
-                new google.maps.LatLng(-33.86, 151.2094),
-                new google.maps.LatLng(-33.9167, 151.2500),
-                new google.maps.LatLng(-33.9121, 151.2629),
-                new google.maps.LatLng(-33.9461, 151.1772)
-            ], {addPoints: true});
+    function initialize() {
 
-            //LocationUtil.removeLine(line, {removePoints: true});
-        });
+
+
+//        google.maps.event.addListenerOnce(map, 'idle', function(){
+//            var LocationUtil = new wm.Markers(map, {
+//                createMarker: function(cluster) {
+//                    return new google.maps.Marker();
+//                },
+//                createPolyline: function() {
+//                    return new google.maps.Polyline()
+//                },
+//                mapConnector: wm.mapConnectors.google
+//            });
+//
+//            var line = LocationUtil.addLine([
+//                new google.maps.LatLng(-27.4679, 153.0278),
+//                new google.maps.LatLng(-33.86, 151.2094),
+//                new google.maps.LatLng(-33.9167, 151.2500),
+//                new google.maps.LatLng(-33.9121, 151.2629),
+//                new google.maps.LatLng(-33.9461, 151.1772)
+//            ], {addPoints: true});
+//
+//            //LocationUtil.removeLine(line, {removePoints: true});
+//        });
 
 
     }
-    google.maps.event.addDomListener(window, 'load', initialize);
+//    google.maps.event.addDomListener(window, 'load', initialize);
 
 
 </script>
