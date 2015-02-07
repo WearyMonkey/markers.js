@@ -4,11 +4,12 @@ window.wm = {
     Point: require('./../point.js'),
     Line: require('./../line.js'),
     mapConnectors: {
-        mapBox: require('./../map-connectors/mapbox.js'),
-        google: require('./../map-connectors/google.js')
+        mapbox: require('./../map-connectors/mapbox.js'),
+        google: require('./../map-connectors/google.js'),
+        bing: require('./../map-connectors/bing.js')
     }
 };
-},{"./../line.js":4,"./../map-connectors/google.js":5,"./../map-connectors/mapbox.js":6,"./../markers.js":7,"./../point.js":8}],2:[function(require,module,exports){
+},{"./../line.js":4,"./../map-connectors/bing.js":5,"./../map-connectors/google.js":6,"./../map-connectors/mapbox.js":7,"./../markers.js":8,"./../point.js":9}],2:[function(require,module,exports){
 var wmu = require('./utils.js');
 
 var ids = 1;
@@ -123,32 +124,34 @@ wmu.extend(Cluster.prototype, {
 
             this._bestPoint = null;
             this._bounds = this._geo.createBounds();
-            var c = 0;
+            var latLngs = [];
             for (var pId in this._points) {
                 if (this._points.hasOwnProperty(pId)) {
-                    this._geo.extendBounds(this._bounds, this._points[pId]._latLng);
-                    c = c + 1;
+                    latLngs.push(this._points[pId]._latLng);
                 }
             }
-            return !!c;
+            this._bounds = this._geo.extendBounds(this._bounds, latLngs);
+            return !!latLngs.length;
         } else {
             return true;
         }
     },
 
     addPoints: function(points) {
-        var i, hasPoint = false;
+        var i, hasPoint = false, latLngs = [];
 
         for (i = 0;  i < points.length; ++i) {
             var point = points[i];
             if (this._points[point._id]) continue;
             this._points[point._id] = point;
-            this._geo.extendBounds(this._bounds, point._latLng);
+            latLngs.push(point._latLng);
             if (this._parent) {
                 this._parent._pointToChild[point._id] = this;
             }
             hasPoint = true;
         }
+
+        this._bounds = this._geo.extendBounds(this._bounds, latLngs);
 
         if (hasPoint) {
             this._bestPoint = null;
@@ -296,11 +299,10 @@ function chooseBest(self, center, latLngOrBounds, chilren, max) {
 function rankInsert(self, latLngOrBounds, bounds) {
     //todo, optimise
     // currently the change in area (R-tree)
-    var newBounds = self._geo.createBounds();
-    self._geo.extendBounds(newBounds, bounds);
-    self._geo.extendBounds(newBounds, latLngOrBounds);
-    var newSpan = self._geo.getBoundsSpan(newBounds),
+    var newBounds = self._geo.extendBounds(self._geo.createBounds(), [bounds, latLngOrBounds]),
+        newSpan = self._geo.getBoundsSpan(newBounds),
         oldSpan = self._geo.getBoundsSpan(bounds);
+
     return (newSpan._lat * newSpan._lng) - (oldSpan._lat * oldSpan._lng);
 }
 
@@ -329,7 +331,7 @@ function splitChildren(self, zoom, zoomRange) {
     for (i = 0; i < seeds.length; ++i) {
         newChild = new Cluster(self, zoom, zoomRange, self._geo, self._settings);
         newChildren.push(newChild);
-        self._geo.extendBounds(newChild._bounds, seeds[i]._bounds)
+        newChild._bounds = self._geo.extendBounds(newChild._bounds, [seeds[i]._bounds])
     }
 
     for (i = 0; i < self._children.length; ++i) {
@@ -374,7 +376,7 @@ function getFurthest(self, latLng, children) {
 }
 
 function mergeChild(self, newCluster, child) {
-    self._geo.extendBounds(newCluster._bounds, child._bounds);
+    newCluster._bounds = self._geo.extendBounds(newCluster._bounds, [child._bounds]);
     child._parent = newCluster;
     for (var i in child._points) {
         if (!child._points.hasOwnProperty(i)) continue;
@@ -457,7 +459,7 @@ function distanceLatLngsSquared(lat1, lng1, lat2, lng2) {
 }
 
 module.exports = Cluster;
-},{"./utils.js":9}],3:[function(require,module,exports){
+},{"./utils.js":10}],3:[function(require,module,exports){
 var wmu = require('./utils.js');
 var Cluster = require('./cluster.js');
 var States = Cluster.States;
@@ -551,7 +553,7 @@ function getConnectionChild(zoom, displayCluster1, point1Id) {
         return displayCluster1._pointToChild[point1Id];
     }
 }
-},{"./cluster.js":2,"./utils.js":9}],4:[function(require,module,exports){
+},{"./cluster.js":2,"./utils.js":10}],4:[function(require,module,exports){
 var Point = require('./point');
 var wmu = require('./utils.js');
 
@@ -589,9 +591,117 @@ function copyPoints(points) {
 module.exports = Line;
 
 
-},{"./point":8,"./utils.js":9}],5:[function(require,module,exports){
+},{"./point":9,"./utils.js":10}],5:[function(require,module,exports){
 module.exports = {
     maxZoom: 20,
+
+    createMarker: function () {
+        return new Microsoft.Maps.Pushpin();
+    },
+
+    createPolyline: function() {
+        return new Microsoft.Maps.Polyline([]);
+    },
+
+    createLatLng: function(lat, lng) {
+        return new Microsoft.Maps.Location(lat, lng);
+    },
+
+    getLatLng: function(latLng) {
+        return {_lat: latLng.latitude, _lng: latLng.longitude}
+    },
+
+    getMarketPosition: function(marker) {
+        return marker.getLocation();
+    },
+
+    setMarkerPosition: function(marker, latLng) {
+        marker.setLocation(latLng);
+    },
+
+    getPolylinePath: function(polyline) {
+        return polyline.getLocations().slice();
+    },
+
+    setPolylinePath: function(polyline, latLngs) {
+        polyline.setLocations(latLngs);
+    },
+
+    showMarker: function(map, marker) {
+        map.entities.push(marker);
+    },
+
+    showPolyline: function(map, polyline) {
+        map.entities.push(polyline);
+    },
+
+    hideMarker: function(map, marker) {
+        map.entities.remove(marker);
+    },
+
+    hidePolyline: function(map, polyline) {
+        map.entities.remove(polyline);
+    },
+
+    createBounds: function() {
+        return new Microsoft.Maps.LocationRect();
+    },
+
+    extendBounds: function(bounds, latLngOrBounds) {
+        var locations = latLngOrBounds.center ? [bounds.getNorthwest(), bounds.getSoutheast()] : [];
+        for (var i = 0; i < latLngOrBounds.length; ++i) {
+            var latLngOrBound = latLngOrBounds[i];
+            if (latLngOrBound instanceof Microsoft.Maps.LocationRect && latLngOrBound.center) {
+                locations.push(latLngOrBound.getNorthwest());
+                locations.push(latLngOrBound.getSoutheast());
+            } else {
+                locations.push(latLngOrBound);
+            }
+        }
+        return Microsoft.Maps.LocationRect.fromLocations(locations)
+    },
+
+    getBoundsCenter: function(bounds) {
+        return bounds.center;
+    },
+
+    boundsIntersects: function(bounds1, bounds2) {
+        if (!bounds1.center || !bounds2.center) return false;
+        else return bounds1.intersects(bounds2);
+    },
+
+    getBoundsSpan: function(bounds) {
+       return {_lat: bounds.height, _lng: bounds.width};
+    },
+
+    onMapBoundsChange: function(map, callback) {
+        Microsoft.Maps.Events.addHandler(map, 'viewchangeend', callback);
+    },
+
+    offMapsBoundChange: function(token) {
+        //map.off('move', token);
+    },
+
+    getMapZoom: function(map) {
+        return map.getZoom();
+    },
+
+    getMapBounds: function(map) {
+        return map.getBounds();
+    }
+};
+
+},{}],6:[function(require,module,exports){
+module.exports = {
+    maxZoom: 20,
+
+    createMarker: function () {
+        return new google.maps.Marker();
+    },
+
+    createPolyline: function() {
+        return new google.maps.Polyline();
+    },
 
     createLatLng: function(lat, lng) {
         return new google.maps.LatLng(lat, lng);
@@ -638,11 +748,15 @@ module.exports = {
     },
 
     extendBounds: function(bounds, latLngOrBounds) {
-        if (latLngOrBounds instanceof google.maps.LatLng) {
-            bounds.extend(latLngOrBounds);
-        } else if (latLngOrBounds instanceof google.maps.LatLngBounds) {
-            bounds.union(latLngOrBounds);
+        for (var i = 0; i < latLngOrBounds.length; ++i) {
+            var latLngOrBound = latLngOrBounds[i];
+            if (latLngOrBound instanceof google.maps.LatLng) {
+                bounds.extend(latLngOrBound);
+            } else if (latLngOrBound instanceof google.maps.LatLngBounds) {
+                bounds.union(latLngOrBound);
+            }
         }
+        return bounds;
     },
 
     getBoundsCenter: function(bounds) {
@@ -674,9 +788,17 @@ module.exports = {
         return map.getBounds();
     }
 };
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = {
     maxZoom: 20,
+
+    createMarker: function () {
+        return L.marker();
+    },
+
+    createPolyline: function() {
+        return L.polyline([]);
+    },
 
     createLatLng: function(lat, lng) {
         return L.latLng(lat, lng);
@@ -723,7 +845,10 @@ module.exports = {
     },
 
     extendBounds: function(bounds, latLngOrBounds) {
-        bounds.extend(latLngOrBounds);
+        for (var i = 0; i < latLngOrBounds.length; i++) {
+            bounds.extend(latLngOrBounds[i]);
+        }
+        return bounds;
     },
 
     getBoundsCenter: function(bounds) {
@@ -759,7 +884,7 @@ module.exports = {
     }
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var Cluster = require('./cluster.js');
 require('./cluster_search.js');
 var wmu = require('./utils.js');
@@ -777,13 +902,16 @@ var defaults = {
 var Markers = function(map, options) {
     var self = this;
 
-    this._options = wmu.extend({}, defaults, options);
     this._visibleClusters = [];
     this._visibleConnections = [];
     this._keepKey = 0;
     this._map = map;
     this._prevZoom = this._map.getZoom();
     this._geo = options.mapConnector || (wm.defaultMapConnector && wm.mapConnectors && wm.mapConnectors[wm.defaultMapConnector]);
+    this._options = wmu.extend({}, defaults, {
+        createMarker: this._geo.createMarker,
+        createPolyline: this._geo.createPolyline
+    }, options);
     this._clusterRoot = Cluster.makeRootCluster(this._geo);
 
     resetViewport(this);
@@ -807,6 +935,7 @@ wmu.extend(Markers.prototype, {
             this._clusterRoot.addPoints(line._points);
         }
         this._clusterRoot.addLine(line);
+        resetViewport(this);
         return line;
     },
 
@@ -816,27 +945,32 @@ wmu.extend(Markers.prototype, {
         if (options && options.removePoints === true) {
             this._clusterRoot.removePoints(line._points);
         }
+        resetViewport(this);
     },
 
     addPoint: function(point) {
         point = Point(point);
         this._clusterRoot.addPoints([point]);
+        resetViewport(this);
         return point;
     },
 
     removePoint: function(point) {
         this._clusterRoot.removePoints([point]);
+        resetViewport(this);
     },
 
     addPoints: function(points) {
         var wmPoints = [];
         for (var i = 0; i < points.length; ++i) wmPoints.push(Point(points[i]));
         this._clusterRoot.addPoint(wmPoints);
+        resetViewport(this);
         return wmPoints;
     },
 
     removePoints: function(points) {
         this._clusterRoot.removePoints(points);
+        resetViewport(this);
     },
 
     destroy: function() {
@@ -1194,7 +1328,7 @@ function expandBoundingBox(box, factor) {
 }
 
 module.exports = Markers;
-},{"./cluster.js":2,"./cluster_search.js":3,"./line.js":4,"./point.js":8,"./utils.js":9}],8:[function(require,module,exports){
+},{"./cluster.js":2,"./cluster_search.js":3,"./line.js":4,"./point.js":9,"./utils.js":10}],9:[function(require,module,exports){
 var wmu = require('./utils.js');
 
 var ids = 1;
@@ -1221,7 +1355,7 @@ wmu.extend(Point.prototype, {
 });
 
 module.exports = Point;
-},{"./utils.js":9}],9:[function(require,module,exports){
+},{"./utils.js":10}],10:[function(require,module,exports){
 module.exports = {
     extend: function(target) {
         for (var i = 1; i < arguments.length; ++i) {
