@@ -20,6 +20,7 @@
 
 <script type="text/javascript" src="lib/utils.js"></script>
 <script type="text/javascript" src="lib/point.js"></script>
+<script type="text/javascript" src="lib/line.js"></script>
 <script type="text/javascript" src="lib/cluster.js"></script>
 <script type="text/javascript" src="lib/cluster_search.js"></script>
 <script type="text/javascript" src="lib/location_util.js"></script>
@@ -42,11 +43,14 @@
                     return new google.maps.Polyline()
                 }
             });
-            LocationUtil.addPoint(wm.Point({sequence: 1, latLng: new google.maps.LatLng(-27.4679, 153.0278)}));
-            LocationUtil.addPoint(wm.Point({sequence: 2, latLng: new google.maps.LatLng(-33.86, 151.2094)}));
-            LocationUtil.addPoint(wm.Point({sequence: 3, latLng: new google.maps.LatLng(-33.9167, 151.2500)}));
-            LocationUtil.addPoint(wm.Point({sequence: 4, latLng: new google.maps.LatLng(-33.9121, 151.2629)}));
-            LocationUtil.addPoint(wm.Point({sequence: 5, latLng: new google.maps.LatLng(-33.9461, 151.1772)}));
+
+            LocationUtil.addLine(wm.Line([
+                new google.maps.LatLng(-27.4679, 153.0278),
+                new google.maps.LatLng(-33.86, 151.2094),
+                new google.maps.LatLng(-33.9167, 151.2500),
+                new google.maps.LatLng(-33.9121, 151.2629),
+                new google.maps.LatLng(-33.9461, 151.1772)
+            ]), {addPoints: true});
         });
 
 
