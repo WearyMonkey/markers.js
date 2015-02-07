@@ -54,7 +54,10 @@ module.exports = {
     },
 
     extendBounds: function(bounds, latLngOrBounds) {
-        bounds.extend(latLngOrBounds);
+        for (var i = 0; i < latLngOrBounds.length; i++) {
+            bounds.extend(latLngOrBounds[i]);
+        }
+        return bounds;
     },
 
     getBoundsCenter: function(bounds) {

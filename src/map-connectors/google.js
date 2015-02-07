@@ -54,11 +54,15 @@ module.exports = {
     },
 
     extendBounds: function(bounds, latLngOrBounds) {
-        if (latLngOrBounds instanceof google.maps.LatLng) {
-            bounds.extend(latLngOrBounds);
-        } else if (latLngOrBounds instanceof google.maps.LatLngBounds) {
-            bounds.union(latLngOrBounds);
+        for (var i = 0; i < latLngOrBounds.length; ++i) {
+            var latLngOrBound = latLngOrBounds[i];
+            if (latLngOrBound instanceof google.maps.LatLng) {
+                bounds.extend(latLngOrBound);
+            } else if (latLngOrBound instanceof google.maps.LatLngBounds) {
+                bounds.union(latLngOrBound);
+            }
         }
+        return bounds;
     },
 
     getBoundsCenter: function(bounds) {

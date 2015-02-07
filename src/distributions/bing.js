@@ -3,8 +3,7 @@ window.wm = {
     Point: require('./../point.js'),
     Line: require('./../line.js'),
     mapConnectors: {
-        mapbox: require('./../map-connectors/mapbox.js'),
-        google: require('./../map-connectors/google.js'),
         bing: require('./../map-connectors/bing.js')
-    }
+    },
+    defaultMapConnector: 'bing'
 };
