@@ -15,13 +15,16 @@ var defaults = {
 var Markers = function(map, options) {
     var self = this;
 
-    this._options = wmu.extend({}, defaults, options);
     this._visibleClusters = [];
     this._visibleConnections = [];
     this._keepKey = 0;
     this._map = map;
     this._prevZoom = this._map.getZoom();
     this._geo = options.mapConnector || (wm.defaultMapConnector && wm.mapConnectors && wm.mapConnectors[wm.defaultMapConnector]);
+    this._options = wmu.extend({}, defaults, {
+        createMarker: this._geo.createMarker,
+        createPolyline: this._geo.createPolyline
+    }, options);
     this._clusterRoot = Cluster.makeRootCluster(this._geo);
 
     resetViewport(this);

@@ -1,6 +1,14 @@
 module.exports = {
     maxZoom: 20,
 
+    createMarker: function () {
+        return new google.maps.Marker();
+    },
+
+    createPolyline: function() {
+        return new google.maps.Polyline();
+    },
+
     createLatLng: function(lat, lng) {
         return new google.maps.LatLng(lat, lng);
     },

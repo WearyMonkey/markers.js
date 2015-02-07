@@ -3,7 +3,7 @@ window.wm = {
     Point: require('./../point.js'),
     Line: require('./../line.js'),
     mapConnectors: {
-        mapBox: require('./../map-connectors/mapbox.js'),
+        mapbox: require('./../map-connectors/mapbox.js'),
         google: require('./../map-connectors/google.js')
     }
 };

@@ -1,6 +1,14 @@
 module.exports = {
     maxZoom: 20,
 
+    createMarker: function () {
+        return L.marker();
+    },
+
+    createPolyline: function() {
+        return L.polyline([]);
+    },
+
     createLatLng: function(lat, lng) {
         return L.latLng(lat, lng);
     },
