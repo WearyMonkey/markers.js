@@ -1,0 +1,20 @@
+html, body {
+  display: block;
+  height: 100%;
+  width: 100%; }
+
+.masthead {
+  background: #000; }
+  .masthead h1 {
+    color: #fff;
+    text-align: center; }
+  .masthead #masthead-map {
+    height: 500px;
+    margin: 40px 0;
+    background: white; }
+
+.map-sample {
+  width: 100%;
+  height: 300px; }
+  .map-sample.bing {
+    height: 195px; }
