@@ -115,19 +115,17 @@
         zoom: 8
     });
 
-    Microsoft.Maps.Events.addHandler(bingMap, 'tiledownloadcomplete', function() {
-        var markers = new wm.Markers(bingMap, {
-            mapConnector: wm.mapConnectors.bing
-        });
-
-        markers.addLine([
-            new Microsoft.Maps.Location(-27.4679, 153.0278),
-            new Microsoft.Maps.Location(-33.86, 151.2094),
-            new Microsoft.Maps.Location(-33.9167, 151.2500),
-            new Microsoft.Maps.Location(-33.9121, 151.2629),
-            new Microsoft.Maps.Location(-33.9461, 151.1772)
-        ], {addPoints: true});
+    var markers = new wm.Markers(bingMap, {
+        mapConnector: wm.mapConnectors.bing
     });
+
+    markers.addLine([
+        new Microsoft.Maps.Location(-27.4679, 153.0278),
+        new Microsoft.Maps.Location(-33.86, 151.2094),
+        new Microsoft.Maps.Location(-33.9167, 151.2500),
+        new Microsoft.Maps.Location(-33.9121, 151.2629),
+        new Microsoft.Maps.Location(-33.9461, 151.1772)
+    ], {addPoints: true});
 </script>
 
 <script>

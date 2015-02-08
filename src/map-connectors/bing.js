@@ -54,7 +54,7 @@ module.exports = {
     },
 
     extendBounds: function(bounds, latLngOrBounds) {
-        var locations = latLngOrBounds.center ? [bounds.getNorthwest(), bounds.getSoutheast()] : [];
+        var locations = bounds.center ? [bounds.getNorthwest(), bounds.getSoutheast()] : [];
         for (var i = 0; i < latLngOrBounds.length; ++i) {
             var latLngOrBound = latLngOrBounds[i];
             if (latLngOrBound instanceof Microsoft.Maps.LocationRect && latLngOrBound.center) {
@@ -77,7 +77,7 @@ module.exports = {
     },
 
     getBoundsSpan: function(bounds) {
-       return {_lat: bounds.height, _lng: bounds.width};
+       return {_lat: bounds.height || 0, _lng: bounds.width || 0};
     },
 
     onMapBoundsChange: function(map, callback) {
