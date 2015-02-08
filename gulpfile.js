@@ -8,6 +8,7 @@ var rename = require('gulp-rename');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var connect = require('gulp-connect');
+var sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('all', function() {
     return bundle('all');
@@ -19,6 +20,21 @@ gulp.task('google', function() {
 
 gulp.task('mapbox', function() {
     return bundle('mapbox');
+});
+
+gulp.task('js', function() {
+    var bundler = browserify({
+        entries: ['./src/distributions/all.js'],
+        debug: true
+    });
+
+    return bundler
+        .bundle()
+        .pipe(source('markers.all.js')) // gives streaming vinyl file object
+        .pipe(buffer()) // <----- convert from streaming to buffered vinyl file object
+        .pipe(sourcemaps.write('./'))
+        .pipe(gulp.dest('./dist/'))
+        .pipe(connect.reload());
 });
 
 gulp.task('sass', function () {
@@ -35,7 +51,7 @@ gulp.task('html', function () {
 
 gulp.task('watch', function() {
     gulp.watch('./assets/**/*.scss', ['sass']);
-    gulp.watch('./src/**/*.js', ['all']);
+    gulp.watch('./src/**/*.js', ['js']);
     gulp.watch('./index.html', ['html']);
 });
 
@@ -45,7 +61,7 @@ gulp.task('connect', function() {
     });
 });
 
-gulp.task('dev', ['html', 'sass', 'all', 'watch', 'connect'], function() {
+gulp.task('dev', ['html', 'sass', 'js', 'watch', 'connect'], function() {
 
 });
 
