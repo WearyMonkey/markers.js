@@ -123,32 +123,34 @@ wmu.extend(Cluster.prototype, {
 
             this._bestPoint = null;
             this._bounds = this._geo.createBounds();
-            var c = 0;
+            var latLngs = [];
             for (var pId in this._points) {
                 if (this._points.hasOwnProperty(pId)) {
-                    this._geo.extendBounds(this._bounds, this._points[pId]._latLng);
-                    c = c + 1;
+                    latLngs.push(this._points[pId]._latLng);
                 }
             }
-            return !!c;
+            this._bounds = this._geo.extendBounds(this._bounds, latLngs);
+            return !!latLngs.length;
         } else {
             return true;
         }
     },
 
     addPoints: function(points) {
-        var i, hasPoint = false;
+        var i, hasPoint = false, latLngs = [];
 
         for (i = 0;  i < points.length; ++i) {
             var point = points[i];
             if (this._points[point._id]) continue;
             this._points[point._id] = point;
-            this._geo.extendBounds(this._bounds, point._latLng);
+            latLngs.push(point._latLng);
             if (this._parent) {
                 this._parent._pointToChild[point._id] = this;
             }
             hasPoint = true;
         }
+
+        this._bounds = this._geo.extendBounds(this._bounds, latLngs);
 
         if (hasPoint) {
             this._bestPoint = null;
@@ -296,11 +298,10 @@ function chooseBest(self, center, latLngOrBounds, chilren, max) {
 function rankInsert(self, latLngOrBounds, bounds) {
     //todo, optimise
     // currently the change in area (R-tree)
-    var newBounds = self._geo.createBounds();
-    self._geo.extendBounds(newBounds, bounds);
-    self._geo.extendBounds(newBounds, latLngOrBounds);
-    var newSpan = self._geo.getBoundsSpan(newBounds),
+    var newBounds = self._geo.extendBounds(self._geo.createBounds(), [bounds, latLngOrBounds]),
+        newSpan = self._geo.getBoundsSpan(newBounds),
         oldSpan = self._geo.getBoundsSpan(bounds);
+
     return (newSpan._lat * newSpan._lng) - (oldSpan._lat * oldSpan._lng);
 }
 
@@ -329,7 +330,7 @@ function splitChildren(self, zoom, zoomRange) {
     for (i = 0; i < seeds.length; ++i) {
         newChild = new Cluster(self, zoom, zoomRange, self._geo, self._settings);
         newChildren.push(newChild);
-        self._geo.extendBounds(newChild._bounds, seeds[i]._bounds)
+        newChild._bounds = self._geo.extendBounds(newChild._bounds, [seeds[i]._bounds])
     }
 
     for (i = 0; i < self._children.length; ++i) {
@@ -374,7 +375,7 @@ function getFurthest(self, latLng, children) {
 }
 
 function mergeChild(self, newCluster, child) {
-    self._geo.extendBounds(newCluster._bounds, child._bounds);
+    newCluster._bounds = self._geo.extendBounds(newCluster._bounds, [child._bounds]);
     child._parent = newCluster;
     for (var i in child._points) {
         if (!child._points.hasOwnProperty(i)) continue;
@@ -593,6 +594,14 @@ module.exports = Line;
 module.exports = {
     maxZoom: 20,
 
+    createMarker: function () {
+        return L.marker();
+    },
+
+    createPolyline: function() {
+        return L.polyline([]);
+    },
+
     createLatLng: function(lat, lng) {
         return L.latLng(lat, lng);
     },
@@ -638,7 +647,10 @@ module.exports = {
     },
 
     extendBounds: function(bounds, latLngOrBounds) {
-        bounds.extend(latLngOrBounds);
+        for (var i = 0; i < latLngOrBounds.length; i++) {
+            bounds.extend(latLngOrBounds[i]);
+        }
+        return bounds;
     },
 
     getBoundsCenter: function(bounds) {
@@ -692,13 +704,16 @@ var defaults = {
 var Markers = function(map, options) {
     var self = this;
 
-    this._options = wmu.extend({}, defaults, options);
     this._visibleClusters = [];
     this._visibleConnections = [];
     this._keepKey = 0;
     this._map = map;
     this._prevZoom = this._map.getZoom();
     this._geo = options.mapConnector || (wm.defaultMapConnector && wm.mapConnectors && wm.mapConnectors[wm.defaultMapConnector]);
+    this._options = wmu.extend({}, defaults, {
+        createMarker: this._geo.createMarker,
+        createPolyline: this._geo.createPolyline
+    }, options);
     this._clusterRoot = Cluster.makeRootCluster(this._geo);
 
     resetViewport(this);
@@ -722,6 +737,7 @@ wmu.extend(Markers.prototype, {
             this._clusterRoot.addPoints(line._points);
         }
         this._clusterRoot.addLine(line);
+        resetViewport(this);
         return line;
     },
 
@@ -731,27 +747,32 @@ wmu.extend(Markers.prototype, {
         if (options && options.removePoints === true) {
             this._clusterRoot.removePoints(line._points);
         }
+        resetViewport(this);
     },
 
     addPoint: function(point) {
         point = Point(point);
         this._clusterRoot.addPoints([point]);
+        resetViewport(this);
         return point;
     },
 
     removePoint: function(point) {
         this._clusterRoot.removePoints([point]);
+        resetViewport(this);
     },
 
     addPoints: function(points) {
         var wmPoints = [];
         for (var i = 0; i < points.length; ++i) wmPoints.push(Point(points[i]));
         this._clusterRoot.addPoint(wmPoints);
+        resetViewport(this);
         return wmPoints;
     },
 
     removePoints: function(points) {
         this._clusterRoot.removePoints(points);
+        resetViewport(this);
     },
 
     destroy: function() {
