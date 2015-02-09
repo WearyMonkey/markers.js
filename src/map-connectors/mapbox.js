@@ -77,11 +77,11 @@ module.exports = {
 
     onMapBoundsChange: function(map, callback) {
         map.on('move', callback);
-        return callback;
+        return {thing: map, event: 'move', callback: callback};
     },
 
-    offMapsBoundChange: function(token) {
-        map.off('move', token);
+    off: function(token) {
+        token.thing.off(token.event, token.callback);
     },
 
     getMapZoom: function(map) {
@@ -94,6 +94,6 @@ module.exports = {
 
     onMarkerClicked: function(marker, callback) {
         marker.on('click', callback);
-        return callback;
+        return {thing: marker, event: 'click', callback: callback};
     }
 };

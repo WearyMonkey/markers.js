@@ -111,7 +111,9 @@ wmu.extend(Markers.prototype, {
             hideConnection(this, this._visibleConnections[i], true);
         }
 
-        if (this._boundsListener) google.maps.event.removeListener(this._boundsListener);
+        if (this._boundsListener) {
+            this._geo.offMapsBoundChange(this._boundsListener);
+        }
     },
 
     setClusterState: function(cluster, state) {
@@ -153,7 +155,7 @@ function showCluster(self, cluster, center) {
 
     if (!cluster._marker) {
         cluster._marker = self._options.createMarker(cluster);
-        self._geo.onMarkerClicked(cluster._marker, function() {
+        cluster._clickListener = self._geo.onMarkerClicked(cluster._marker, function() {
             trigger(self, 'clusterClicked', {cluster: cluster});
         });
     }
@@ -200,7 +202,10 @@ function hideCluster(self, cluster, destroy) {
         self._geo.hideMarker(self._map, cluster._marker);
         cluster._visible = false;
         trigger(self, 'clusterHidden', {cluster: cluster});
-        if (destroy) delete cluster._marker;
+        if (destroy) {
+            self._geo.off(cluster._clickListener);
+            delete cluster._marker;
+        }
     }
 }
 

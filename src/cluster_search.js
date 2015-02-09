@@ -67,16 +67,19 @@ function flattenConnections(connections, zoom) {
                 ids[connection._id] = true;
                 flatConnections.push(connection);
 
-                connection._displayCluster1 = connection._cluster._pointToChild[connection._pointId1];
-                connection._displayCluster2 = connection._cluster._pointToChild[connection._pointId2];
+                var displayCluster1 = connection._cluster._pointToChild[connection._pointId1];
+                var displayCluster2 = connection._cluster._pointToChild[connection._pointId2];
 
-                while (connectionChild = getConnectionChild(zoom, connection._displayCluster1, point1Id)) {
-                    connection._displayCluster1 = connectionChild;
+                while (connectionChild = getConnectionChild(zoom, displayCluster1, point1Id)) {
+                    displayCluster1 = connectionChild;
                 }
 
-                while (connectionChild = getConnectionChild(zoom, connection._displayCluster2, point2Id)) {
-                    connection._displayCluster2 = connectionChild;
+                while (connectionChild = getConnectionChild(zoom, displayCluster2, point2Id)) {
+                    displayCluster2 = connectionChild;
                 }
+
+                connection._displayCluster1 = displayCluster1;
+                connection._displayCluster2 = displayCluster2;
             }
         }
     }

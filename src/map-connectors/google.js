@@ -82,8 +82,8 @@ module.exports = {
         return google.maps.event.addListener(map, 'bounds_changed', callback);
     },
 
-    offMapsBoundChange: function(token) {
-
+    off: function(token) {
+        google.maps.event.removeListener(token);
     },
 
     getMapZoom: function(map) {

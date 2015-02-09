@@ -84,8 +84,8 @@ module.exports = {
         Microsoft.Maps.Events.addHandler(map, 'viewchangeend', callback);
     },
 
-    offMapsBoundChange: function(token) {
-        //map.off('move', token);
+    off: function(token) {
+        Microsoft.Maps.Events.removeHandler(token);
     },
 
     getMapZoom: function(map) {
