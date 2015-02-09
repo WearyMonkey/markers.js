@@ -5,8 +5,8 @@ var Point = require('./point.js');
 var Line = require('./line.js');
 
 var defaults = {
-    animationSteps: 10,
-    animationInterval: 50,
+    animationSteps: 30,
+    animationInterval: 16,
     debug: false,
     createMarker: function() {},
     createPolyline: function() {}
@@ -25,7 +25,8 @@ var Markers = function(map, options) {
         createMarker: this._geo.createMarker,
         createPolyline: this._geo.createPolyline
     }, options);
-    this._clusterRoot = Cluster.makeRootCluster(this._geo);
+    this._clusterRoot = new Cluster(null, 0, this._geo.maxZoom+1, this._geo, { zoomBoxes: getZoomBoxes(this._geo) } );
+    this._listeners = [];
 
     resetViewport(this);
 
@@ -41,6 +42,21 @@ var Markers = function(map, options) {
 };
 
 wmu.extend(Markers.prototype, {
+
+    on: function(eventName, callback) {
+        this._listeners.push({event: eventName, callback: callback});
+        return this;
+    },
+
+    off: function(eventName, callback) {
+        for (var i = 0; i < this._listeners.length; ++i) {
+            var listener = this._listeners[i];
+            if (listener.event == eventName && (!callback || callback == listener.callback)) {
+                this._listeners.splice(i--, 1);
+            }
+        }
+        return this;
+    },
 
     addLine: function(line, options) {
         line = Line(line);
@@ -99,28 +115,37 @@ wmu.extend(Markers.prototype, {
     },
 
     setClusterState: function(cluster, state) {
-        var oldState = cluster.getState(),
+        var oldState = cluster._state,
             newState = state,
             nextRoot,
             root = cluster;
 
         if (newState == oldState) return;
 
-        if (state == Cluster.States.Normal) {
-
-            while ((nextRoot = root.getParent(true)) && nextRoot.getState() !== Cluster.States.Normal) root = nextRoot;
-            state = oldState == Cluster.States.Collapsed ? Cluster.States.Expanded : Cluster.States.Collapsed;
+        if (state == 'normal') {
+            while ((nextRoot = root._parent) && nextRoot._state !== 'normal') root = nextRoot;
+            state = oldState == 'collapsed' ? 'expanded' : 'collapsed';
         }
 
-        if (state == Cluster.States.Collapsed) {
+        if (state == 'collapsed') {
             zoomOut(this, root, this._map.getZoom(), root);
             root.setState(newState, true);
-        } else if (state == Cluster.States.Expanded) {
+        } else if (state == 'expanded') {
             root.setState(newState, true);
             zoomIn(this, root, this._map.getZoom(), root);
         }
     }
 });
+
+function trigger(self, event, data) {
+    var re = new RegExp('^' + event + '(\\..*)?$');
+    for (var i = 0; i < self._listeners.length; ++i) {
+        var listener = self._listeners[i];
+        if (listener.event.match(re)) {
+            listener.callback(wmu.extend({markers: self}, data));
+        }
+    }
+}
 
 function showCluster(self, cluster, center) {
     cluster._keepKey = self._keepKey;
@@ -128,6 +153,9 @@ function showCluster(self, cluster, center) {
 
     if (!cluster._marker) {
         cluster._marker = self._options.createMarker(cluster);
+        self._geo.onMarkerClicked(cluster._marker, function() {
+            trigger(self, 'clusterClicked', {cluster: cluster});
+        });
     }
 
     if (!center) center = cluster.getDisplayCenter();
@@ -137,6 +165,7 @@ function showCluster(self, cluster, center) {
     if (!cluster._visible) {
         self._geo.showMarker(self._map, cluster._marker);
         cluster._visible = true;
+        trigger(self, 'clusterShown', {cluster: cluster});
     }
 
     return cluster._marker;
@@ -147,7 +176,7 @@ function showConnection(self, connection) {
     self._visibleConnections.push(connection);
 
     if (!connection.polyline) {
-        connection.polyline = self._options.createPolyline(connection._line, connection._cluster1, connection._cluster2);
+        connection.polyline = self._options.createPolyline(connection._line);
     }
 
     self._geo.setPolylinePath(connection.polyline, [
@@ -159,6 +188,7 @@ function showConnection(self, connection) {
     if (!connection._visible) {
         self._geo.showPolyline(self._map, connection.polyline);
         connection._visible = true;
+        trigger(self, 'lineShown', {line: connection._line});
     }
 
     return connection.polyline;
@@ -169,6 +199,7 @@ function hideCluster(self, cluster, destroy) {
         // hidden event
         self._geo.hideMarker(self._map, cluster._marker);
         cluster._visible = false;
+        trigger(self, 'clusterHidden', {cluster: cluster});
         if (destroy) delete cluster._marker;
     }
 }
@@ -178,6 +209,7 @@ function hideConnection(self, connection, destroy) {
         // hidden event
         self._geo.hidePolyline(self._map, connection.polyline);
         connection._visible = false;
+        trigger(self, 'lineHidden', {line: connection._line});
         if (destroy) delete connection.polyline;
     }
 }
@@ -439,5 +471,23 @@ function expandBoundingBox(box, factor) {
         new google.maps.LatLng( neLat, neLng )
     );
 }
+
+function getZoomBoxes(geo) {
+    var zoomBoxes = [],
+        minDis = 84.375,
+        maxDis = 112.6,
+        scale = 1;
+
+    for (var z = 0; z <= geo.maxZoom; z++) {
+        zoomBoxes[z] = {
+            min: (minDis / scale),
+            max: (maxDis / scale)
+        };
+        scale <<= 1;
+    }
+    
+    return zoomBoxes;
+}
+
 
 module.exports = Markers;

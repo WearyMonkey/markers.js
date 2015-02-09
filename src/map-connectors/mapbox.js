@@ -90,5 +90,10 @@ module.exports = {
 
     getMapBounds: function(map) {
         return map.getBounds();
+    },
+
+    onMarkerClicked: function(marker, callback) {
+        marker.on('click', callback);
+        return callback;
     }
 };

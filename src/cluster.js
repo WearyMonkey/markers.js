@@ -15,19 +15,8 @@ var Cluster = function (parent, zoom, zoomRange, geo, settings) {
     this._connections = [];
     this._bounds = geo.createBounds();
     this._center = geo.createLatLng(0, 0);
+    this._state = 'normal';
 };
-
-wmu.extend(Cluster, {
-    States: {
-        Normal: 0,
-        Collapsed: 1,
-        Expanded: 2
-    },
-
-    makeRootCluster: function(geo) {
-        return new Cluster(null, 0, geo.maxZoom+1, geo, { zoomBoxes: getZoomBoxes(geo) } );
-    }
-});
 
 wmu.extend(Cluster.prototype, {
     getAncestors: function() {
@@ -412,26 +401,6 @@ function findZoomRange(self) {
     while (bottom > top && self._settings.zoomBoxes[bottom].max < bigDis) bottom--;
 
     return bottom - top + 1;
-}
-
-function getZoomBoxes(geo) {
-    if (!Cluster.zoomBoxes) {
-        var zoomBoxes = Cluster.zoomBoxes = [];
-
-        var minDis = 84.375,
-            maxDis = 112.6,
-            scale = 1;
-
-        for (var z = 0; z <= geo.maxZoom; z++) {
-            zoomBoxes[z] = {
-                min: (minDis / scale),
-                max: (maxDis / scale)
-            };
-            scale <<= 1;
-        }
-    }
-
-    return Cluster.zoomBoxes;
 }
 
 function distancePointsSquared(self, p1, p2) {

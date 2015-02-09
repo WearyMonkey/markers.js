@@ -92,5 +92,9 @@ module.exports = {
 
     getMapBounds: function(map) {
         return map.getBounds();
+    },
+
+    onMarkerClicked: function(marker, callback) {
+        return google.maps.event.addListener(marker, 'click', callback);
     }
 };

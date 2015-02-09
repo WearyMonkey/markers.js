@@ -78,10 +78,18 @@
         zoom: 8
     });
 
+    function clickHandler(event) {
+        if (event.cluster.getState() == 'normal') {
+            event.markers.setClusterState(event.cluster, 'expanded');
+        } else {
+            event.markers.setClusterState(event.cluster, 'normal');
+        }
+    }
+
     google.maps.event.addListenerOnce(mastHeadMap, 'idle', function() {
         var markers = new wm.Markers(mastHeadMap, {
             mapConnector: wm.mapConnectors.google
-        });
+        }).on('clusterClicked', clickHandler);
 
         markers.addLine([
             new google.maps.LatLng(-27.4679, 153.0278),
@@ -98,7 +106,7 @@
         .on('ready', function () {
             var markers = new wm.Markers(mapBoxMap, {
                 mapConnector: wm.mapConnectors.mapbox
-            });
+            }).on('clusterClicked', clickHandler);
 
             markers.addLine([
                 L.latLng(-27.4679, 153.0278),
@@ -115,11 +123,11 @@
         zoom: 8
     });
 
-    var markers = new wm.Markers(bingMap, {
+    var bingMarkers = new wm.Markers(bingMap, {
         mapConnector: wm.mapConnectors.bing
-    });
+    }).on('clusterClicked', clickHandler);
 
-    markers.addLine([
+    bingMarkers.addLine([
         new Microsoft.Maps.Location(-27.4679, 153.0278),
         new Microsoft.Maps.Location(-33.86, 151.2094),
         new Microsoft.Maps.Location(-33.9167, 151.2500),

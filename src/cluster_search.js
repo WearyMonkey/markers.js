@@ -1,6 +1,5 @@
 var wmu = require('./utils.js');
 var Cluster = require('./cluster.js');
-var States = Cluster.States;
 
 wmu.extend(Cluster.prototype, {
     getContainedClustersAndConnections: function(bounds, zoom) {
@@ -28,8 +27,8 @@ function search(self, bounds, zoom, clusters, connections) {
 
     if (!self._geo.boundsIntersects(self._bounds, bounds)) return;
 
-    var inZoomRange = self.isInZoomRange(zoom) && self._state != States.Expanded;
-    var atBottom = !self._children.length || self._state == States.Collapsed;
+    var inZoomRange = self.isInZoomRange(zoom) && self._state != 'expanded';
+    var atBottom = !self._children.length || self._state == 'collapsed';
 
     if (atBottom || inZoomRange) {
         clusters.push(self);
@@ -85,8 +84,8 @@ function flattenConnections(connections, zoom) {
 }
 
 function getConnectionChild(zoom, displayCluster1, point1Id) {
-    var inZoomRange = displayCluster1.isInZoomRange(zoom) && displayCluster1._state !== States.Expanded;
-    var atBottom = !displayCluster1._pointToChild[point1Id] || displayCluster1._state === States.Collapsed;
+    var inZoomRange = displayCluster1.isInZoomRange(zoom) && displayCluster1._state !== 'expanded';
+    var atBottom = !displayCluster1._pointToChild[point1Id] || displayCluster1._state === 'collapsed';
     if (!inZoomRange && !atBottom) {
         return displayCluster1._pointToChild[point1Id];
     }
