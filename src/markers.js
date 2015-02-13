@@ -4,14 +4,6 @@ var wmu = require('./utils.js');
 var Point = require('./point.js');
 var Line = require('./line.js');
 
-var defaults = {
-    animationSteps: 30,
-    animationInterval: 16,
-    debug: false,
-    createMarker: function() {},
-    createPolyline: function() {}
-};
-
 var Markers = function(map, options) {
     var self = this;
 
@@ -21,7 +13,10 @@ var Markers = function(map, options) {
     this._map = map;
     this._zoom = this._prevZoom = this._map.getZoom();
     this._geo = options.mapConnector || (wm.defaultMapConnector && wm.mapConnectors && wm.mapConnectors[wm.defaultMapConnector]);
-    this._options = wmu.extend({}, defaults, {
+    this._options = wmu.extend({
+        animationSteps: 30,
+        animationInterval: 16,
+        debug: false,
         createMarker: this._geo.createMarker,
         createPolyline: this._geo.createPolyline
     }, options);
@@ -38,6 +33,7 @@ var Markers = function(map, options) {
 
         resetViewport(self);
 
+        self._prevZoom = zoom;
         self._prevBounds = self._geo.getMapBounds(map);
     });
 };
@@ -130,16 +126,16 @@ wmu.extend(Markers.prototype, {
         if (state == 'normal') {
             cluster._expandDepth = 0;
             if (oldExpandDepth > 0) {
-                zoomOut(this, this._zoom);
+                zoomOut(this);
             } else if (oldExpandDepth < 0) {
-                zoomIn(this, this._zoom);
+                zoomIn(this);
             }
         } else if (state == 'collapsed') {
             cluster._expandDepth = -1;
-            zoomOut(this, this._zoom);
+            zoomOut(this);
         } else if (state == 'expanded') {
             cluster._expandDepth = 1;
-            zoomIn(this, this._zoom);
+            zoomIn(this);
         }
 
         delete cluster._oldExpandDepth;
@@ -183,7 +179,7 @@ function showConnection(self, connection) {
     self._visibleConnections.push(connection);
 
     if (!connection.polyline) {
-        connection.polyline = self._options.createPolyline(connection._line);
+        connection.polyline = connection.polyline || self._options.createPolyline(connection._line);
     }
 
     self._geo.setPolylinePath(connection.polyline, [
@@ -202,7 +198,6 @@ function showConnection(self, connection) {
 
 function hideCluster(self, cluster, destroy) {
     if (cluster._marker) {
-        // hidden event
         self._geo.hideMarker(self._map, cluster._marker);
         cluster._visible = false;
         trigger(self, 'clusterHidden', {cluster: cluster});
@@ -215,7 +210,6 @@ function hideCluster(self, cluster, destroy) {
 
 function hideConnection(self, connection, destroy) {
     if (connection.polyline) {
-        // hidden event
         self._geo.hidePolyline(self._map, connection.polyline);
         connection._visible = false;
         trigger(self, 'lineHidden', {line: connection._line});
@@ -223,10 +217,9 @@ function hideConnection(self, connection, destroy) {
     }
 }
 
-function move(self, zoom) {
-    var root = self._clusterRoot;
+function move(self) {
     var i;
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._zoom, zoom || self._prevZoom, '_expandDepth', '_oldExpandDepth');
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), self._zoom, self._prevZoom, '_expandDepth', '_oldExpandDepth');
     for (i = 0; i < visible.clusters.length; ++i) {
         showCluster(self, visible.clusters[i].cluster);
     }
@@ -235,13 +228,13 @@ function move(self, zoom) {
     }
 }
 
-function zoomIn(self, zoom) {
-    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._zoom, zoom || self._prevZoom, '_expandDepth', '_oldExpandDepth');
+function zoomIn(self) {
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), self._zoom, self._prevZoom, '_expandDepth', '_oldExpandDepth');
     prepareAnimations(self, visible, false);
 }
 
-function zoomOut(self, zoom) {
-    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._prevZoom, zoom || self._zoom, '_oldExpandDepth', '_expandDepth');
+function zoomOut(self) {
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), self._prevZoom, self._zoom, '_oldExpandDepth', '_expandDepth');
     prepareAnimations(self, visible, true);
 }
 
@@ -262,9 +255,7 @@ function prepareAnimations(self, visible, collapse) {
 
     var animatedPolylines = getPolylinesToAnimate(self, visible.connections, childrenToAnimate);
 
-    animate(self, childMarkers, animatedPolylines, function() {
-        move(self);
-    });
+    animate(self, childMarkers, animatedPolylines);
 }
 
 function addChildAnimation(self, parentChild, collapse, childMarkers, childrenToAnimate) {
@@ -323,11 +314,14 @@ function getPolylinesToAnimate(self, connections, animatedClusters) {
     return toAnimate;
 }
 
-function animate(self, markers, polylines, done) {
-    var steps = 0;
-    self._interval = setInterval(function() {
-        if (steps < self._options.animationSteps) {
-            var i;
+function animate(self, markers, polylines) {
+    var steps = 0,
+        interval = self._options.animationInterval,
+        i;
+
+    step();
+    function step() {
+        if (steps++ < self._options.animationSteps) {
             for (i = 0; i < markers.length; ++i) {
                 var marker = markers[i];
                 var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), marker.dLat, marker.dLng);
@@ -336,24 +330,19 @@ function animate(self, markers, polylines, done) {
             for (i = 0; i < polylines.length; ++i) {
                 var polyline = polylines[i];
                 var polyPath = self._geo.getPolylinePath(polyline);
-                if (typeof polyline.dLat1 !== "undefined") {
-                    polyPath[0] = getMovedLatLng(self, polyPath[0], polyline.dLat1, polyline.dLng1);
-                }
-                if (typeof polyline.dLat2 !== "undefined") {
-                    polyPath[1] = getMovedLatLng(self, polyPath[1], polyline.dLat2, polyline.dLng2);
-                }
+                polyPath[0] = getMovedLatLng(self, polyPath[0], polyline.dLat1, polyline.dLng1);
+                polyPath[1] = getMovedLatLng(self, polyPath[1], polyline.dLat2, polyline.dLng2);
                 self._geo.setPolylinePath(polyline, polyPath);
             }
-        } else if (steps == self._options.animationSteps) {
-            clearInterval(self._interval);
-
-            if (done) done();
+            self._timeout = setTimeout(step, interval)
+        } else {
+            move(self);
         }
-        ++steps;
-    }, self._options.animationInterval);
+    }
 }
 
 function getMovedLatLng(self, oldLatLng, dLat, dLng) {
+    if (!dLat && !dLng) return oldLatLng;
     var oldPos = self._geo.getLatLng(oldLatLng);
     return self._geo.createLatLng(oldPos._lat + dLat, oldPos._lng + dLng);
 }
@@ -367,7 +356,7 @@ function resetViewport(self) {
     self._visibleClusters = [];
     self._visibleConnections = [];
 
-    clearInterval(self._interval);
+    clearTimeout(self._timeout);
 
     var zoom = self._geo.getMapZoom(self._map);
     var zoomShift = zoom - self._prevZoom;
@@ -401,35 +390,6 @@ function resetViewport(self) {
 // and also clamp it to the bounds of the earth.
 function getSearchBounds(self) {
     return self._geo.getMapBounds(self._map);
-
-    var mapBounds = self._map.getBounds();
-    if (!mapBounds) return mapBounds;
-
-    return expandBoundingBox(mapBounds, 4);
-}
-
-function expandBoundingBox(box, factor) {
-    var sw = box.getSouthWest();
-    var ne = box.getNorthEast();
-    var dLat = (ne.lat()-sw.lat())/factor;
-    var dLng = (ne.lng()-sw.lng())/factor;
-
-    var swLat = Math.max(-90, sw.lat()-dLat);
-    var swLng = sw.lng()-dLng;
-    var neLat = Math.min(90, ne.lat()+dLat);
-    var neLng = ne.lng()+dLng;
-
-    // some google methods break when Lng Span s actually 360 or 0
-    var edge = 180-0.00001;
-    if (neLng - swLng <=0 || neLng - swLng >= 360) {
-        neLng = edge;
-        swLng = -edge;
-    }
-
-    return new google.maps.LatLngBounds(
-        new google.maps.LatLng( swLat, swLng ),
-        new google.maps.LatLng( neLat, neLng )
-    );
 }
 
 function getZoomBoxes(geo) {
