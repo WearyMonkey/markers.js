@@ -4,15 +4,7 @@ var Cluster = require('./cluster.js');
 wmu.extend(Cluster.prototype, {
     getContainedClustersAndConnections: function(bounds, zoom, prevZoom, expandField, preExpandField) {
         var clusters = [],
-            connections = [],
-            ancestors = this.getAncestors();
-
-        for (var i = ancestors.length - 1; i >= 0; --i) {
-            var ancestor = ancestors[i];
-            if (ancestor && (ancestor._zoom + ancestor._zoomRange - 1) < zoom) {
-                findConnections(ancestor, connections);
-            }
-        }
+            connections = [];
 
         if (this._geo.boundsIntersects(this._bounds, bounds)) {
             search(this, null, 0, 0, bounds, false, prevZoom, zoom, expandField, preExpandField, clusters, connections);

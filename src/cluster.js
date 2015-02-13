@@ -19,15 +19,6 @@ var Cluster = function (parent, zoom, zoomRange, geo, settings) {
 };
 
 wmu.extend(Cluster.prototype, {
-    getAncestors: function() {
-        var ancestors = [],
-            parent = this;
-
-        while (parent = parent._parent) ancestors.push(parent);
-
-        return ancestors;
-    },
-
     getBounds: function() {
         return this._bounds;
     },
@@ -62,10 +53,6 @@ wmu.extend(Cluster.prototype, {
 
     getZoomRange: function() {
         return {from:this._zoom, to:this._zoom + this._zoomRange - 1};
-    },
-
-    isInZoomRange: function(zoom) {
-        return zoom >= this._zoom && zoom < this._zoom + this._zoomRange;
     },
 
     removePoints: function(points) {
@@ -191,12 +178,11 @@ wmu.extend(Cluster.prototype, {
 });
 
  function getBestPoint(self) {
-    var i, parent, parentsBest, dis, point,
+    var i, parentsBest, dis, point,
         shortestDis = Number.MAX_VALUE;
 
     if (!self._bestPoint) {
-        parent = self.getParent();
-        parentsBest = parent && getBestPoint(parent);
+        parentsBest = self._parent && getBestPoint(self._parent);
         if (parentsBest && self._points[parentsBest._id] != null) {
             self._bestPoint = parentsBest;
         } else {
@@ -208,9 +194,6 @@ wmu.extend(Cluster.prototype, {
                     self._bestPoint = point;
                     shortestDis = dis;
                 }
-                //else if (dis == shortestDis && point.getScore() > self.bestPoint.getScore()) {
-                //    self.bestPoint = point;
-                //}
             }
         }
     }

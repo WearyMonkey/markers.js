@@ -236,104 +236,58 @@ function move(self, zoom) {
 }
 
 function zoomIn(self, zoom) {
-    var root = self._clusterRoot;
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._zoom, zoom || self._prevZoom, '_expandDepth', '_oldExpandDepth');
-    var childMarkers = [];
-
-    function addChild(parent, child) {
-        if (parent == child) return false;
-        if (parent) {
-            var marker = showCluster(self, child, parent.getDisplayCenter());
-            if (!marker) {
-                console.log("Null Marker");
-                return false;
-            }
-
-            var cLatLng = self._geo.getLatLng(child.getDisplayCenter()),
-                pLatLng = self._geo.getLatLng(parent.getDisplayCenter());
-
-            marker.dLat = (cLatLng._lat - pLatLng._lat) / self._options.animationSteps;
-            marker.dLng = (cLatLng._lng - pLatLng._lng) / self._options.animationSteps;
-            marker.inPlace = false;
-            childMarkers.push(marker);
-
-            hideCluster(self, parent);
-            return true;
-        } else {
-            showCluster(self, child);
-            return false;
-        }
-    }
-
-
-    var childrenToAnimate = getChildrenToAnimate(visible, root, addChild);
-    var childPolylines = getPolylinesToAnimate(self, visible.connections, childrenToAnimate);
-
-    animate(self, childMarkers, childPolylines);
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._zoom, zoom || self._prevZoom, '_expandDepth', '_oldExpandDepth');
+    prepareAnimations(self, visible, false);
 }
 
 function zoomOut(self, zoom) {
-    var root = self._clusterRoot;
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._prevZoom, zoom || self._zoom, '_oldExpandDepth', '_expandDepth');
-    var childMarkers = [];
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._prevZoom, zoom || self._zoom, '_oldExpandDepth', '_expandDepth');
+    prepareAnimations(self, visible, true);
+}
 
-    function addChild(parent, child) {
-        if (parent == child) return false;
-        if (parent) {
-            var marker = showCluster(self, child);
+function prepareAnimations(self, visible, collapse) {
+    var childrenToAnimate = {},
+        childMarkers = [],
+        i;
 
-            var cLatLng = self._geo.getLatLng(child.getDisplayCenter()),
-                pLatLng = self._geo.getLatLng(parent.getDisplayCenter());
-
-            marker.dLat = (pLatLng._lat - cLatLng._lat) / self._options.animationSteps;
-            marker.dLng = (pLatLng._lng - cLatLng._lng) / self._options.animationSteps;
-            childMarkers.push(marker);
-
-            return true;
-        } else {
-            showCluster(self, child);
-            return false;
-        }
+    for (i = 0; i < visible.clusters.length; ++i) {
+        addChildAnimation(self, visible.clusters[i], collapse, childMarkers, childrenToAnimate);
     }
 
-    var animatedChildren = getChildrenToAnimate(visible, root, addChild);
-    var animatedPolylines = getPolylinesToAnimate(self, visible.connections, animatedChildren);
+    for (i = 0; i < visible.connections.length; i++) {
+        var connection = visible.connections[i];
+        addChildAnimation(self, connection._displayCluster1, collapse, childMarkers, childrenToAnimate);
+        addChildAnimation(self, connection._displayCluster2, collapse, childMarkers, childrenToAnimate);
+    }
+
+    var animatedPolylines = getPolylinesToAnimate(self, visible.connections, childrenToAnimate);
 
     animate(self, childMarkers, animatedPolylines, function() {
         move(self);
     });
 }
 
-function getChildrenToAnimate(visible, root, addChildfn) {
-    var childrenToAnimate = {},
-        i;
+function addChildAnimation(self, parentChild, collapse, childMarkers, childrenToAnimate) {
+    var parent = parentChild.parent,
+        child =  parentChild.cluster;
 
-    function add(parent, child, checkRoot) {
-        if (!childrenToAnimate[child._id] && (!checkRoot || checkAncestor(parent, root)) && addChildfn(parent, child)) {
-            childrenToAnimate[child._id] = child;
-        }
+    if (childrenToAnimate[child._id]) return;
+
+    if (parent) {
+        var to = collapse ? parent : child,
+            from = collapse ? child : parent,
+            toLatLng = self._geo.getLatLng(to.getDisplayCenter()),
+            fromLatLng = self._geo.getLatLng(from.getDisplayCenter()),
+            marker = showCluster(self, child, from.getDisplayCenter());
+
+        marker.dLat = (toLatLng._lat - fromLatLng._lat) / self._options.animationSteps;
+        marker.dLng = (toLatLng._lng - fromLatLng._lng) / self._options.animationSteps;
+
+        childMarkers.push(marker);
+        childrenToAnimate[child._id] = child;
+    } else {
+        showCluster(self, child);
     }
-
-    for (i = 0; i < visible.clusters.length; ++i) {
-        add(visible.clusters[i].parent, visible.clusters[i].cluster, false);
-    }
-
-    var check = root._parent !== null;
-    for (i = 0; i < visible.connections.length; i++) {
-        var connection = visible.connections[i];
-        add(connection._displayCluster1.parent, connection._displayCluster1.cluster, check);
-        add(connection._displayCluster2.parent, connection._displayCluster2.cluster, check);
-    }
-
-    return childrenToAnimate;
-}
-
-function checkAncestor(descendant, ancestor) {
-    while (descendant) {
-        if (descendant == ancestor) return true;
-        descendant = descendant._parent;
-    }
-    return false;
 }
 
 function getPolylinesToAnimate(self, connections, animatedClusters) {
