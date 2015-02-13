@@ -78,18 +78,23 @@
         zoom: 8
     });
 
-    function clickHandler(event) {
-        if (event.cluster.getState() == 'normal') {
-            event.markers.setClusterState(event.cluster, 'expanded');
-        } else {
-            event.markers.setClusterState(event.cluster, 'normal');
-        }
-    }
-
     google.maps.event.addListenerOnce(mastHeadMap, 'idle', function() {
         var markers = new wm.Markers(mastHeadMap, {
-            mapConnector: wm.mapConnectors.google
-        }).on('clusterClicked', clickHandler);
+            mapConnector: wm.mapConnectors.google,
+            createMarker: function(cluster) {
+                var marker = new google.maps.Marker();
+
+                google.maps.event.addListener(marker, "rightclick", function() {
+                    markers.setClusterState(cluster, 'normal');
+                });
+
+                google.maps.event.addListener(marker, "click", function() {
+                    markers.setClusterState(cluster, 'expanded');
+                });
+
+                return marker;
+            }
+        });
 
         markers.addLine([
             new google.maps.LatLng(-27.4679, 153.0278),
@@ -106,7 +111,7 @@
         .on('ready', function () {
             var markers = new wm.Markers(mapBoxMap, {
                 mapConnector: wm.mapConnectors.mapbox
-            }).on('clusterClicked', clickHandler);
+            });
 
             markers.addLine([
                 L.latLng(-27.4679, 153.0278),
@@ -125,7 +130,7 @@
 
     var bingMarkers = new wm.Markers(bingMap, {
         mapConnector: wm.mapConnectors.bing
-    }).on('clusterClicked', clickHandler);
+    });
 
     bingMarkers.addLine([
         new Microsoft.Maps.Location(-27.4679, 153.0278),

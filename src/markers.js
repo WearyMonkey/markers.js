@@ -19,7 +19,7 @@ var Markers = function(map, options) {
     this._visibleConnections = [];
     this._keepKey = 0;
     this._map = map;
-    this._prevZoom = this._map.getZoom();
+    this._zoom = this._prevZoom = this._map.getZoom();
     this._geo = options.mapConnector || (wm.defaultMapConnector && wm.mapConnectors && wm.mapConnectors[wm.defaultMapConnector]);
     this._options = wmu.extend({}, defaults, {
         createMarker: this._geo.createMarker,
@@ -33,10 +33,11 @@ var Markers = function(map, options) {
     this._boundsListener = self._geo.onMapBoundsChange(map, function() {
         var zoom = self._geo.getMapZoom(map);
         if (zoom < 0 || zoom > self._geo.maxZoom) return;
+        self._prevZoom = self._zoom;
+        self._zoom = zoom;
 
         resetViewport(self);
 
-        self._prevZoom = zoom;
         self._prevBounds = self._geo.getMapBounds(map);
     });
 };
@@ -117,25 +118,31 @@ wmu.extend(Markers.prototype, {
     },
 
     setClusterState: function(cluster, state) {
-        var oldState = cluster._state,
-            newState = state,
-            nextRoot,
-            root = cluster;
+        if (state == 'normal') {
+            while (cluster && cluster._expandDepth == 0) cluster = cluster._parent;
+        }
 
-        if (newState == oldState) return;
+        if (!cluster) return;
+
+        var oldExpandDepth = cluster._expandDepth;
+        cluster._oldExpandDepth = oldExpandDepth;
 
         if (state == 'normal') {
-            while ((nextRoot = root._parent) && nextRoot._state !== 'normal') root = nextRoot;
-            state = oldState == 'collapsed' ? 'expanded' : 'collapsed';
+            cluster._expandDepth = 0;
+            if (oldExpandDepth > 0) {
+                zoomOut(this, this._zoom);
+            } else if (oldExpandDepth < 0) {
+                zoomIn(this, this._zoom);
+            }
+        } else if (state == 'collapsed') {
+            cluster._expandDepth = -1;
+            zoomOut(this, this._zoom);
+        } else if (state == 'expanded') {
+            cluster._expandDepth = 1;
+            zoomIn(this, this._zoom);
         }
 
-        if (state == 'collapsed') {
-            zoomOut(this, root, this._map.getZoom(), root);
-            root.setState(newState, true);
-        } else if (state == 'expanded') {
-            root.setState(newState, true);
-            zoomIn(this, root, this._map.getZoom(), root);
-        }
+        delete cluster._oldExpandDepth;
     }
 });
 
@@ -160,10 +167,8 @@ function showCluster(self, cluster, center) {
         });
     }
 
-    if (!center) center = cluster.getDisplayCenter();
-    self._geo.setMarkerPosition(cluster._marker, center);
+    self._geo.setMarkerPosition(cluster._marker, center || cluster.getDisplayCenter());
 
-    // visible event
     if (!cluster._visible) {
         self._geo.showMarker(self._map, cluster._marker);
         cluster._visible = true;
@@ -182,11 +187,10 @@ function showConnection(self, connection) {
     }
 
     self._geo.setPolylinePath(connection.polyline, [
-        connection._displayCluster1.getDisplayCenter(),
-        connection._displayCluster2.getDisplayCenter()
+        connection._displayCluster1.cluster.getDisplayCenter(),
+        connection._displayCluster2.cluster.getDisplayCenter()
     ]);
 
-    // visible event
     if (!connection._visible) {
         self._geo.showPolyline(self._map, connection.polyline);
         connection._visible = true;
@@ -219,26 +223,26 @@ function hideConnection(self, connection, destroy) {
     }
 }
 
-function move(self, root) {
+function move(self, zoom) {
+    var root = self._clusterRoot;
     var i;
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), self._geo.getMapZoom(self._map));
+    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._zoom, zoom || self._prevZoom, '_expandDepth', '_oldExpandDepth');
     for (i = 0; i < visible.clusters.length; ++i) {
-        showCluster(self, visible.clusters[i]);
+        showCluster(self, visible.clusters[i].cluster);
     }
     for (i = 0; i < visible.connections.length; ++i) {
         showConnection(self, visible.connections[i]);
     }
 }
 
-function zoomIn(self, root, zoom, overrideParent) {
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom);
+function zoomIn(self, zoom) {
+    var root = self._clusterRoot;
+    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._zoom, zoom || self._prevZoom, '_expandDepth', '_oldExpandDepth');
     var childMarkers = [];
-    var mapZoom = self._geo.getMapZoom(self._map);
 
     function addChild(parent, child) {
-        parent = overrideParent || parent;
         if (parent == child) return false;
-        if (overrideParent || parent && parent.getZoomRange().to == mapZoom-1) {
+        if (parent) {
             var marker = showCluster(self, child, parent.getDisplayCenter());
             if (!marker) {
                 console.log("Null Marker");
@@ -268,15 +272,14 @@ function zoomIn(self, root, zoom, overrideParent) {
     animate(self, childMarkers, childPolylines);
 }
 
-function zoomOut(self, root, zoom, overrideParent) {
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom);
+function zoomOut(self, zoom) {
+    var root = self._clusterRoot;
+    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom || self._prevZoom, zoom || self._zoom, '_oldExpandDepth', '_expandDepth');
     var childMarkers = [];
-    var mapZoom = self._geo.getMapZoom(self._map);
 
     function addChild(parent, child) {
-        parent = overrideParent || parent;
         if (parent == child) return false;
-        if (overrideParent || parent && parent.getZoomRange().to == mapZoom) {
+        if (parent) {
             var marker = showCluster(self, child);
 
             var cLatLng = self._geo.getLatLng(child.getDisplayCenter()),
@@ -297,7 +300,7 @@ function zoomOut(self, root, zoom, overrideParent) {
     var animatedPolylines = getPolylinesToAnimate(self, visible.connections, animatedChildren);
 
     animate(self, childMarkers, animatedPolylines, function() {
-        resetViewport(self);
+        move(self);
     });
 }
 
@@ -305,34 +308,32 @@ function getChildrenToAnimate(visible, root, addChildfn) {
     var childrenToAnimate = {},
         i;
 
-    function checkAncestor(descendant, ancestor) {
-        while (descendant) {
-            if (descendant == ancestor) return true;
-            descendant = descendant.getParent();
-        }
-        return false;
-    }
-
     function add(parent, child, checkRoot) {
         if (!childrenToAnimate[child._id] && (!checkRoot || checkAncestor(parent, root)) && addChildfn(parent, child)) {
-            //todo make sure the point at the center is above the overs so it doesnt flash
-            //$(child.marker.getElement()).css("z-index", child.getBestPoint() == parent.getBestPoint() ? 100 : null);
             childrenToAnimate[child._id] = child;
         }
     }
 
     for (i = 0; i < visible.clusters.length; ++i) {
-        add(visible.clusters[i]._parent, visible.clusters[i], false);
+        add(visible.clusters[i].parent, visible.clusters[i].cluster, false);
     }
 
     var check = root._parent !== null;
     for (i = 0; i < visible.connections.length; i++) {
         var connection = visible.connections[i];
-        add(connection._displayCluster1._parent, connection._displayCluster1, check);
-        add(connection._displayCluster2._parent, connection._displayCluster2, check);
+        add(connection._displayCluster1.parent, connection._displayCluster1.cluster, check);
+        add(connection._displayCluster2.parent, connection._displayCluster2.cluster, check);
     }
 
     return childrenToAnimate;
+}
+
+function checkAncestor(descendant, ancestor) {
+    while (descendant) {
+        if (descendant == ancestor) return true;
+        descendant = descendant._parent;
+    }
+    return false;
 }
 
 function getPolylinesToAnimate(self, connections, animatedClusters) {
@@ -340,8 +341,8 @@ function getPolylinesToAnimate(self, connections, animatedClusters) {
     for (var i = 0; i < connections.length; ++i) {
         var connection = connections[i],
             polyline = showConnection(self, connection),
-            cluster1 = animatedClusters[connection._displayCluster1._id],
-            cluster2 = animatedClusters[connection._displayCluster2._id],
+            cluster1 = animatedClusters[connection._displayCluster1.cluster._id],
+            cluster2 = animatedClusters[connection._displayCluster2.cluster._id],
             polyStart = null, polyEnd  = null, polyPath = null;
 
         if (!polyline) continue;
@@ -416,12 +417,12 @@ function resetViewport(self) {
 
     var zoom = self._geo.getMapZoom(self._map);
     var zoomShift = zoom - self._prevZoom;
-    if (zoomShift == 1) {
-        zoomIn(self, self._clusterRoot, zoom);
-    } else if (zoomShift == -1) {
-        zoomOut(self, self._clusterRoot, zoom+1);
+    if (zoomShift > 0) {
+        zoomIn(self);
+    } else if (zoomShift < 0) {
+        zoomOut(self);
     } else {
-        move(self, self._clusterRoot);
+        move(self);
     }
 
     // push hiding to the next event loop to fix a small flicker

@@ -15,7 +15,7 @@ var Cluster = function (parent, zoom, zoomRange, geo, settings) {
     this._connections = [];
     this._bounds = geo.createBounds();
     this._center = geo.createLatLng(0, 0);
-    this._state = 'normal';
+    this._expandDepth = 0
 };
 
 wmu.extend(Cluster.prototype, {
@@ -56,17 +56,8 @@ wmu.extend(Cluster.prototype, {
         return this._parent;
     },
 
-    getState: function() {
-        return this._state;
-    },
-
-    setState: function(state, recurse) {
-        this._state = state;
-        if (recurse) {
-            for (var i = 0; i < this._children.length; ++i) {
-                this._children[i].setState(state, true);
-            }
-        }
+    getExpandDepth: function() {
+        return this._expandDepth;
     },
 
     getZoomRange: function() {
@@ -163,7 +154,8 @@ wmu.extend(Cluster.prototype, {
                     _id: ids++,
                     _pointId1: pointId,
                     _pointId2: prePointId,
-                    _cluster: this,
+                    _cluster1: pointToChild[pointId],
+                    _cluster2: pointToChild[prePointId],
                     _line: line
                 })
             }
