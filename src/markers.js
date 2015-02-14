@@ -171,6 +171,8 @@ function showCluster(self, cluster, center) {
         trigger(self, 'clusterShown', {cluster: cluster});
     }
 
+    cluster._marker.dLat = cluster._marker.dLng = null;
+
     return cluster._marker;
 }
 
@@ -178,22 +180,24 @@ function showConnection(self, connection) {
     connection._keepKey = self._keepKey;
     self._visibleConnections.push(connection);
 
-    if (!connection.polyline) {
-        connection.polyline = connection.polyline || self._options.createPolyline(connection._line);
-    }
+    connection._polyline = connection._polyline || self._options.createPolyline(connection._line);
 
-    self._geo.setPolylinePath(connection.polyline, [
-        connection._displayCluster1.cluster.getDisplayCenter(),
-        connection._displayCluster2.cluster.getDisplayCenter()
+    self._geo.setPolylinePath(connection._polyline, [
+        connection._displayCluster1.cluster._marker ?
+            self._geo.getMarketPosition(connection._displayCluster1.cluster._marker) :
+            connection._displayCluster1.cluster.getDisplayCenter(),
+        connection._displayCluster2.cluster._marker ?
+            self._geo.getMarketPosition(connection._displayCluster2.cluster._marker) :
+            connection._displayCluster2.cluster.getDisplayCenter()
     ]);
 
     if (!connection._visible) {
-        self._geo.showPolyline(self._map, connection.polyline);
+        self._geo.showPolyline(self._map, connection._polyline);
         connection._visible = true;
         trigger(self, 'lineShown', {line: connection._line});
     }
 
-    return connection.polyline;
+    return connection._polyline;
 }
 
 function hideCluster(self, cluster, destroy) {
@@ -209,11 +213,11 @@ function hideCluster(self, cluster, destroy) {
 }
 
 function hideConnection(self, connection, destroy) {
-    if (connection.polyline) {
-        self._geo.hidePolyline(self._map, connection.polyline);
+    if (connection._polyline) {
+        self._geo.hidePolyline(self._map, connection._polyline);
         connection._visible = false;
         trigger(self, 'lineHidden', {line: connection._line});
-        if (destroy) delete connection.polyline;
+        if (destroy) delete connection._polyline;
     }
 }
 
@@ -239,30 +243,31 @@ function zoomOut(self) {
 }
 
 function prepareAnimations(self, visible, collapse) {
-    var childrenToAnimate = {},
-        childMarkers = [],
-        i;
+    var i;
 
     for (i = 0; i < visible.clusters.length; ++i) {
-        addChildAnimation(self, visible.clusters[i], collapse, childMarkers, childrenToAnimate);
+        addChildAnimation(self, visible.clusters[i], collapse);
     }
 
     for (i = 0; i < visible.connections.length; i++) {
         var connection = visible.connections[i];
-        addChildAnimation(self, connection._displayCluster1, collapse, childMarkers, childrenToAnimate);
-        addChildAnimation(self, connection._displayCluster2, collapse, childMarkers, childrenToAnimate);
+        addChildAnimation(self, connection._displayCluster1, collapse);
+        addChildAnimation(self, connection._displayCluster2, collapse);
     }
 
-    var animatedPolylines = getPolylinesToAnimate(self, visible.connections, childrenToAnimate);
+    for (i = 0; i < visible.connections.length; ++i) {
+        showConnection(self, visible.connections[i]);
+    }
 
-    animate(self, childMarkers, animatedPolylines);
+    animate(self);
 }
 
-function addChildAnimation(self, parentChild, collapse, childMarkers, childrenToAnimate) {
+function addChildAnimation(self, parentChild, collapse) {
     var parent = parentChild.parent,
         child =  parentChild.cluster;
 
-    if (childrenToAnimate[child._id]) return;
+    // this cluster has already been processed
+    if (child._keepKey == self._keepKey) return;
 
     if (parent) {
         var to = collapse ? parent : child,
@@ -273,65 +278,38 @@ function addChildAnimation(self, parentChild, collapse, childMarkers, childrenTo
 
         marker.dLat = (toLatLng._lat - fromLatLng._lat) / self._options.animationSteps;
         marker.dLng = (toLatLng._lng - fromLatLng._lng) / self._options.animationSteps;
-
-        childMarkers.push(marker);
-        childrenToAnimate[child._id] = child;
     } else {
         showCluster(self, child);
     }
 }
 
-function getPolylinesToAnimate(self, connections, animatedClusters) {
-    var toAnimate = [];
-    for (var i = 0; i < connections.length; ++i) {
-        var connection = connections[i],
-            polyline = showConnection(self, connection),
-            cluster1 = animatedClusters[connection._displayCluster1.cluster._id],
-            cluster2 = animatedClusters[connection._displayCluster2.cluster._id],
-            polyStart = null, polyEnd  = null, polyPath = null;
-
-        if (!polyline) continue;
-
-        polyline.dLat1 = polyline.dLng1 = polyline.dLat2 = polyline.dLng2 = null;
-        if (cluster1) {
-            polyline.dLat1 = cluster1._marker.dLat;
-            polyline.dLng1 = cluster1._marker.dLng;
-            polyStart = self._geo.getMarketPosition(cluster1._marker);
-        }
-        if (cluster2) {
-            polyline.dLat2 = cluster2._marker.dLat;
-            polyline.dLng2 = cluster2._marker.dLng;
-            polyEnd = self._geo.getMarketPosition(cluster2._marker);
-        }
-        if (polyStart || polyEnd) {
-            polyPath = self._geo.getPolylinePath(polyline);
-            polyPath[0] = polyStart || polyPath[0];
-            polyPath[1] = polyEnd || polyPath[1];
-            self._geo.setPolylinePath(polyline, polyPath);
-            toAnimate.push(polyline);
-        }
-    }
-    return toAnimate;
-}
-
-function animate(self, markers, polylines) {
-    var steps = 0,
-        interval = self._options.animationInterval,
-        i;
+function animate(self) {
+    var steps = 0, i,
+        interval = self._options.animationInterval;
 
     step();
     function step() {
         if (steps++ < self._options.animationSteps) {
-            for (i = 0; i < markers.length; ++i) {
-                var marker = markers[i];
-                var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), marker.dLat, marker.dLng);
-                self._geo.setMarkerPosition(marker, movedLatLng);
+            for (i = 0; i < self._visibleClusters.length; ++i) {
+                var marker = self._visibleClusters[i]._marker;
+                if (marker && (marker.dLat || marker.dLng)) {
+                    var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), marker);
+                    self._geo.setMarkerPosition(marker, movedLatLng);
+                }
             }
-            for (i = 0; i < polylines.length; ++i) {
-                var polyline = polylines[i];
-                var polyPath = self._geo.getPolylinePath(polyline);
-                polyPath[0] = getMovedLatLng(self, polyPath[0], polyline.dLat1, polyline.dLng1);
-                polyPath[1] = getMovedLatLng(self, polyPath[1], polyline.dLat2, polyline.dLng2);
+
+            for (i = 0; i < self._visibleConnections.length; ++i) {
+                var connection = self._visibleConnections[i],
+                    marker1 = connection._displayCluster1.cluster._marker,
+                    marker2 = connection._displayCluster2.cluster._marker;
+
+                if (!marker1.dLat == null && marker2.dLat == null) continue;
+
+                var polyline = connection._polyline,
+                    polyPath = self._geo.getPolylinePath(polyline);
+
+                polyPath[0] = getMovedLatLng(self, polyPath[0], marker1);
+                polyPath[1] = getMovedLatLng(self, polyPath[1], marker2);
                 self._geo.setPolylinePath(polyline, polyPath);
             }
             self._timeout = setTimeout(step, interval)
@@ -341,15 +319,14 @@ function animate(self, markers, polylines) {
     }
 }
 
-function getMovedLatLng(self, oldLatLng, dLat, dLng) {
-    if (!dLat && !dLng) return oldLatLng;
+function getMovedLatLng(self, oldLatLng, delta) {
+    if (!delta || (!delta.dLat && !delta.dLng)) return oldLatLng;
     var oldPos = self._geo.getLatLng(oldLatLng);
-    return self._geo.createLatLng(oldPos._lat + dLat, oldPos._lng + dLng);
+    return self._geo.createLatLng(oldPos._lat + delta.dLat, oldPos._lng + delta.dLng);
 }
 
 function resetViewport(self) {
-    var i = 0,
-        oldVisibleClusters = self._visibleClusters,
+    var oldVisibleClusters = self._visibleClusters,
         oldVisibleConnections = self._visibleConnections;
 
     self._keepKey = (self._keepKey + 1) % 0xDEADBEEF; // mod random big value to stop it from overflowing
@@ -358,11 +335,9 @@ function resetViewport(self) {
 
     clearTimeout(self._timeout);
 
-    var zoom = self._geo.getMapZoom(self._map);
-    var zoomShift = zoom - self._prevZoom;
-    if (zoomShift > 0) {
+    if (self._prevZoom < self._zoom) {
         zoomIn(self);
-    } else if (zoomShift < 0) {
+    } else if (self._prevZoom > self._zoom) {
         zoomOut(self);
     } else {
         move(self);
@@ -370,6 +345,7 @@ function resetViewport(self) {
 
     // push hiding to the next event loop to fix a small flicker
     setTimeout(function() {
+        var i;
         for (i = 0; i < oldVisibleClusters.length; ++i) {
             var cluster = oldVisibleClusters[i];
             if (cluster._keepKey != self._keepKey) {
