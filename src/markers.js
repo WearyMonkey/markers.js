@@ -292,10 +292,10 @@ function animate(self) {
         if (steps++ < self._options.animationSteps) {
             for (i = 0; i < self._visibleClusters.length; ++i) {
                 var marker = self._visibleClusters[i]._marker;
-                if (marker && (marker.dLat || marker.dLng)) {
-                    var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), marker);
-                    self._geo.setMarkerPosition(marker, movedLatLng);
-                }
+                if (!marker.dLat && !marker.dLng) continue;
+
+                var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), marker);
+                self._geo.setMarkerPosition(marker, movedLatLng);
             }
 
             for (i = 0; i < self._visibleConnections.length; ++i) {
