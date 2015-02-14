@@ -17,7 +17,7 @@ module.exports = {
         return {_lat: latLng.lat, _lng: latLng.lng}
     },
 
-    getMarketPosition: function(marker) {
+    getMarkerPosition: function(marker) {
         return marker.getLatLng();
     },
 

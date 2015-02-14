@@ -184,10 +184,10 @@ function showConnection(self, connection) {
 
     self._geo.setPolylinePath(connection._polyline, [
         connection._displayCluster1.cluster._marker ?
-            self._geo.getMarketPosition(connection._displayCluster1.cluster._marker) :
+            self._geo.getMarkerPosition(connection._displayCluster1.cluster._marker) :
             connection._displayCluster1.cluster.getDisplayCenter(),
         connection._displayCluster2.cluster._marker ?
-            self._geo.getMarketPosition(connection._displayCluster2.cluster._marker) :
+            self._geo.getMarkerPosition(connection._displayCluster2.cluster._marker) :
             connection._displayCluster2.cluster.getDisplayCenter()
     ]);
 
@@ -294,7 +294,7 @@ function animate(self) {
                     marker = self._visibleClusters[i]._marker;
                 if (!cluster._dLat && !cluster._dLng) continue;
 
-                var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), cluster);
+                var movedLatLng = getMovedLatLng(self, self._geo.getMarkerPosition(marker), cluster);
                 self._geo.setMarkerPosition(marker, movedLatLng);
             }
 
