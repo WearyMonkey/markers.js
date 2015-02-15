@@ -210,11 +210,7 @@ function addToChildren(self, points) {
 
     for (i = 0; i < points.length; ++i) {
         point = points[i];
-        child = chooseBest(self, point._latLng, point._latLng, self._children);
-        if (!child) {
-            child = new Cluster(self, nextZoom, self._geo.maxZoom - nextZoom + 1, self._geo, self._settings);
-            self._children.push(child);
-        }
+        child = chooseBest(self, point._latLng, self._children);
         childToPoints[child._id] = childToPoints[child._id] || [];
         childToPoints[child._id].push(point);
     }
@@ -228,36 +224,9 @@ function addToChildren(self, points) {
     }
 }
 
-function chooseBest(self, center, latLngOrBounds, chilren, max) {
-    var smallestArea = Number.MAX_VALUE,
-        smallestChild;
-
-    for (var i = 0; i < chilren.length; i++) {
-        var bounds = chilren[i]._bounds;
-        var distance = distancePointsSquared(self, center, self._geo.getBoundsCenter(bounds));
-        var childMax = max || Math.pow(chilren[i]._settings.zoomBoxes[chilren[i]._zoom].max, 2);
-        if (distance < childMax) {
-            var area = rankInsert(self, latLngOrBounds, bounds);
-            if (area < smallestArea) {
-                smallestChild = chilren[i];
-                smallestArea = area;
-            }
-        }
-    }
-
-    return smallestChild;
+function chooseBest(self, center, children) {
+    return getFurthestOrClosest(self, center, children, true);
 }
-
-function rankInsert(self, latLngOrBounds, bounds) {
-    //todo, optimise
-    // currently the change in area (R-tree)
-    var newBounds = self._geo.extendBounds(self._geo.createBounds(), [bounds, latLngOrBounds]),
-        newSpan = self._geo.getBoundsSpan(newBounds),
-        oldSpan = self._geo.getBoundsSpan(bounds);
-
-    return (newSpan._lat * newSpan._lng) - (oldSpan._lat * oldSpan._lng);
-}
-
 
 function splitChildren(self, zoom, zoomRange) {
     var newChildren = [], i, j,
@@ -276,23 +245,19 @@ function splitChildren(self, zoom, zoomRange) {
     if (self._children.length < 3) {
         seeds = self._children;
     } else {
-        seeds = [getFurthest(self, self._center, self._children)];
-        seeds.push(getFurthest(self, seeds[0]._center, self._children));
+        seeds = [getFurthestOrClosest(self, self._center, self._children)];
+        seeds.push(getFurthestOrClosest(self, seeds[0]._center, self._children));
     }
 
     for (i = 0; i < seeds.length; ++i) {
         newChild = new Cluster(self, zoom, zoomRange, self._geo, self._settings);
         newChildren.push(newChild);
-        newChild._bounds = self._geo.extendBounds(newChild._bounds, [seeds[i]._bounds])
+        newChild._center = self._geo.getBoundsCenter(seeds[i]._bounds);
     }
 
     for (i = 0; i < self._children.length; ++i) {
         var child = self._children[i];
-        newChild = chooseBest(self, self._geo.getBoundsCenter(child._bounds), child._bounds, newChildren, Number.MAX_VALUE);
-        if (!newChild) {
-            newChild = new Cluster(self, zoom, zoomRange, self._geo, self._settings);
-            newChildren.push(newChild);
-        }
+        newChild = chooseBest(self, self._geo.getBoundsCenter(child._bounds), newChildren);
         newChild._children.push(child);
     }
 
@@ -314,19 +279,6 @@ function splitChildren(self, zoom, zoomRange) {
     return true;
 }
 
-function getFurthest(self, latLng, children) {
-    var maxDis = 0, maxChild;
-    for (var i = 0; i < children.length; ++i) {
-        var child = children[i];
-        var dis = distancePointsSquared(self, latLng, child._center);
-        if (dis > maxDis) {
-            maxDis = dis;
-            maxChild = child;
-        }
-    }
-    return maxChild;
-}
-
 function mergeChild(self, newCluster, child) {
     newCluster._bounds = self._geo.extendBounds(newCluster._bounds, [child._bounds]);
     child._parent = newCluster;
@@ -337,6 +289,19 @@ function mergeChild(self, newCluster, child) {
         newCluster._pointToChild[point._id] = child;
         self._pointToChild[point._id] = newCluster;
     }
+}
+
+function getFurthestOrClosest(self, latLng, clusters, closest) {
+    var bestDis = closest ? Number.MAX_VALUE : 0, bestChild;
+    for (var i = 0; i < clusters.length; ++i) {
+        var child = clusters[i];
+        var dis = distancePointsSquared(self, latLng, child._center);
+        if ((closest && dis < bestDis) || (!closest && dis > bestDis)) {
+            bestDis = dis;
+            bestChild = child;
+        }
+    }
+    return bestChild;
 }
 
 function removeSelf(self) {
