@@ -120,23 +120,27 @@ wmu.extend(Markers.prototype, {
 
         if (!cluster) return;
 
-        var oldExpandDepth = cluster._expandDepth;
+        var oldExpandDepth = cluster._expandDepth,
+            collapse;
+
         cluster._oldExpandDepth = oldExpandDepth;
 
         if (state == 'normal') {
             cluster._expandDepth = 0;
             if (oldExpandDepth > 0) {
-                zoomOut(this);
+                collapse = true;
             } else if (oldExpandDepth < 0) {
-                zoomIn(this);
+                collapse = false;
             }
         } else if (state == 'collapsed') {
             cluster._expandDepth = -1;
-            zoomOut(this);
+            collapse = true;
         } else if (state == 'expanded') {
             cluster._expandDepth = 1;
-            zoomIn(this);
+            collapse = false;
         }
+
+        resetViewport(this, collapse);
 
         delete cluster._oldExpandDepth;
     }
@@ -303,7 +307,7 @@ function animate(self) {
                     cluster1 = connection._displayCluster1.cluster,
                     cluster2 = connection._displayCluster2.cluster;
 
-                if (!cluster1._dLat == null && cluster2._dLat == null) continue;
+                if (!cluster1._dLat && !cluster2._dLat) continue;
 
                 var polyline = connection._polyline,
                     polyPath = self._geo.getPolylinePath(polyline);
@@ -314,7 +318,7 @@ function animate(self) {
             }
             self._timeout = setTimeout(step, interval)
         } else {
-            move(self);
+            resetViewport(self);
         }
     }
 }
@@ -325,7 +329,7 @@ function getMovedLatLng(self, oldLatLng, delta) {
     return self._geo.createLatLng(oldPos._lat + delta._dLat, oldPos._lng + delta._dLng);
 }
 
-function resetViewport(self) {
+function resetViewport(self, collapse) {
     var oldVisibleClusters = self._visibleClusters,
         oldVisibleConnections = self._visibleConnections;
 
@@ -335,9 +339,9 @@ function resetViewport(self) {
 
     clearTimeout(self._timeout);
 
-    if (self._prevZoom < self._zoom) {
+    if (collapse === false || self._prevZoom < self._zoom) {
         zoomIn(self);
-    } else if (self._prevZoom > self._zoom) {
+    } else if (collapse === true || self._prevZoom > self._zoom) {
         zoomOut(self);
     } else {
         move(self);
