@@ -19,7 +19,7 @@ html, body {
     @include clusterSize(100px);
     border-radius: 100%;
     background-size: cover;
-    background-color: red;
+    background-color: #fff;
   }
 
   @for $i from 0 through 20 {

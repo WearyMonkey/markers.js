@@ -11,7 +11,7 @@ html, body {
   height: 100px;
   border-radius: 100%;
   background-size: cover;
-  background-color: red; }
+  background-color: #fff; }
 #masthead-map[data-wm-zoom="0"] .wm-cluster {
   top: -18.75px;
   left: -18.75px;
