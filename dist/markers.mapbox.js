@@ -26,30 +26,10 @@ var Cluster = function (parent, zoom, zoomRange, geo, settings) {
     this._connections = [];
     this._bounds = geo.createBounds();
     this._center = geo.createLatLng(0, 0);
+    this._expandDepth = 0
 };
 
-wmu.extend(Cluster, {
-    States: {
-        Normal: 0,
-        Collapsed: 1,
-        Expanded: 2
-    },
-
-    makeRootCluster: function(geo) {
-        return new Cluster(null, 0, geo.maxZoom+1, geo, { zoomBoxes: getZoomBoxes(geo) } );
-    }
-});
-
 wmu.extend(Cluster.prototype, {
-    getAncestors: function() {
-        var ancestors = [],
-            parent = this;
-
-        while (parent = parent._parent) ancestors.push(parent);
-
-        return ancestors;
-    },
-
     getBounds: function() {
         return this._bounds;
     },
@@ -78,25 +58,12 @@ wmu.extend(Cluster.prototype, {
         return this._parent;
     },
 
-    getState: function() {
-        return this._state;
-    },
-
-    setState: function(state, recurse) {
-        this._state = state;
-        if (recurse) {
-            for (var i = 0; i < this._children.length; ++i) {
-                this._children[i].setState(state, true);
-            }
-        }
+    getExpandDepth: function() {
+        return this._expandDepth;
     },
 
     getZoomRange: function() {
         return {from:this._zoom, to:this._zoom + this._zoomRange - 1};
-    },
-
-    isInZoomRange: function(zoom) {
-        return zoom >= this._zoom && zoom < this._zoom + this._zoomRange;
     },
 
     removePoints: function(points) {
@@ -185,7 +152,8 @@ wmu.extend(Cluster.prototype, {
                     _id: ids++,
                     _pointId1: pointId,
                     _pointId2: prePointId,
-                    _cluster: this,
+                    _cluster1: pointToChild[pointId],
+                    _cluster2: pointToChild[prePointId],
                     _line: line
                 })
             }
@@ -221,12 +189,11 @@ wmu.extend(Cluster.prototype, {
 });
 
  function getBestPoint(self) {
-    var i, parent, parentsBest, dis, point,
+    var i, parentsBest, dis, point,
         shortestDis = Number.MAX_VALUE;
 
     if (!self._bestPoint) {
-        parent = self.getParent();
-        parentsBest = parent && getBestPoint(parent);
+        parentsBest = self._parent && getBestPoint(self._parent);
         if (parentsBest && self._points[parentsBest._id] != null) {
             self._bestPoint = parentsBest;
         } else {
@@ -238,9 +205,6 @@ wmu.extend(Cluster.prototype, {
                     self._bestPoint = point;
                     shortestDis = dis;
                 }
-                //else if (dis == shortestDis && point.getScore() > self.bestPoint.getScore()) {
-                //    self.bestPoint = point;
-                //}
             }
         }
     }
@@ -257,11 +221,7 @@ function addToChildren(self, points) {
 
     for (i = 0; i < points.length; ++i) {
         point = points[i];
-        child = chooseBest(self, point._latLng, point._latLng, self._children);
-        if (!child) {
-            child = new Cluster(self, nextZoom, self._geo.maxZoom - nextZoom + 1, self._geo, self._settings);
-            self._children.push(child);
-        }
+        child = chooseBest(self, point._latLng, self._children);
         childToPoints[child._id] = childToPoints[child._id] || [];
         childToPoints[child._id].push(point);
     }
@@ -275,36 +235,9 @@ function addToChildren(self, points) {
     }
 }
 
-function chooseBest(self, center, latLngOrBounds, chilren, max) {
-    var smallestArea = Number.MAX_VALUE,
-        smallestChild;
-
-    for (var i = 0; i < chilren.length; i++) {
-        var bounds = chilren[i]._bounds;
-        var distance = distancePointsSquared(self, center, self._geo.getBoundsCenter(bounds));
-        var childMax = max || Math.pow(chilren[i]._settings.zoomBoxes[chilren[i]._zoom].max, 2);
-        if (distance < childMax) {
-            var area = rankInsert(self, latLngOrBounds, bounds);
-            if (area < smallestArea) {
-                smallestChild = chilren[i];
-                smallestArea = area;
-            }
-        }
-    }
-
-    return smallestChild;
+function chooseBest(self, center, children) {
+    return getFurthestOrClosest(self, center, children, true);
 }
-
-function rankInsert(self, latLngOrBounds, bounds) {
-    //todo, optimise
-    // currently the change in area (R-tree)
-    var newBounds = self._geo.extendBounds(self._geo.createBounds(), [bounds, latLngOrBounds]),
-        newSpan = self._geo.getBoundsSpan(newBounds),
-        oldSpan = self._geo.getBoundsSpan(bounds);
-
-    return (newSpan._lat * newSpan._lng) - (oldSpan._lat * oldSpan._lng);
-}
-
 
 function splitChildren(self, zoom, zoomRange) {
     var newChildren = [], i, j,
@@ -323,23 +256,19 @@ function splitChildren(self, zoom, zoomRange) {
     if (self._children.length < 3) {
         seeds = self._children;
     } else {
-        seeds = [getFurthest(self, self._center, self._children)];
-        seeds.push(getFurthest(self, seeds[0]._center, self._children));
+        seeds = [getFurthestOrClosest(self, self._center, self._children)];
+        seeds.push(getFurthestOrClosest(self, seeds[0]._center, self._children));
     }
 
     for (i = 0; i < seeds.length; ++i) {
         newChild = new Cluster(self, zoom, zoomRange, self._geo, self._settings);
         newChildren.push(newChild);
-        newChild._bounds = self._geo.extendBounds(newChild._bounds, [seeds[i]._bounds])
+        newChild._center = self._geo.getBoundsCenter(seeds[i]._bounds);
     }
 
     for (i = 0; i < self._children.length; ++i) {
         var child = self._children[i];
-        newChild = chooseBest(self, self._geo.getBoundsCenter(child._bounds), child._bounds, newChildren, Number.MAX_VALUE);
-        if (!newChild) {
-            newChild = new Cluster(self, zoom, zoomRange, self._geo, self._settings);
-            newChildren.push(newChild);
-        }
+        newChild = chooseBest(self, self._geo.getBoundsCenter(child._bounds), newChildren);
         newChild._children.push(child);
     }
 
@@ -361,19 +290,6 @@ function splitChildren(self, zoom, zoomRange) {
     return true;
 }
 
-function getFurthest(self, latLng, children) {
-    var maxDis = 0, maxChild;
-    for (var i = 0; i < children.length; ++i) {
-        var child = children[i];
-        var dis = distancePointsSquared(self, latLng, child._center);
-        if (dis > maxDis) {
-            maxDis = dis;
-            maxChild = child;
-        }
-    }
-    return maxChild;
-}
-
 function mergeChild(self, newCluster, child) {
     newCluster._bounds = self._geo.extendBounds(newCluster._bounds, [child._bounds]);
     child._parent = newCluster;
@@ -384,6 +300,19 @@ function mergeChild(self, newCluster, child) {
         newCluster._pointToChild[point._id] = child;
         self._pointToChild[point._id] = newCluster;
     }
+}
+
+function getFurthestOrClosest(self, latLng, clusters, closest) {
+    var bestDis = closest ? Number.MAX_VALUE : 0, bestChild;
+    for (var i = 0; i < clusters.length; ++i) {
+        var child = clusters[i];
+        var dis = distancePointsSquared(self, latLng, child._center);
+        if ((closest && dis < bestDis) || (!closest && dis > bestDis)) {
+            bestDis = dis;
+            bestChild = child;
+        }
+    }
+    return bestChild;
 }
 
 function removeSelf(self) {
@@ -425,26 +354,6 @@ function findZoomRange(self) {
     return bottom - top + 1;
 }
 
-function getZoomBoxes(geo) {
-    if (!Cluster.zoomBoxes) {
-        var zoomBoxes = Cluster.zoomBoxes = [];
-
-        var minDis = 84.375,
-            maxDis = 112.6,
-            scale = 1;
-
-        for (var z = 0; z <= geo.maxZoom; z++) {
-            zoomBoxes[z] = {
-                min: (minDis / scale),
-                max: (maxDis / scale)
-            };
-            scale <<= 1;
-        }
-    }
-
-    return Cluster.zoomBoxes;
-}
-
 function distancePointsSquared(self, p1, p2) {
     var latLng1 = p1._lat != null ? p1 : self._geo.getLatLng(p1._latLng || p1);
     var latLng2 = p2._lat != null ? p2 : self._geo.getLatLng(p2._latLng || p2);
@@ -461,95 +370,58 @@ module.exports = Cluster;
 },{"./utils.js":8}],3:[function(require,module,exports){
 var wmu = require('./utils.js');
 var Cluster = require('./cluster.js');
-var States = Cluster.States;
 
 wmu.extend(Cluster.prototype, {
-    getContainedClustersAndConnections: function(bounds, zoom) {
+    getContainedClustersAndConnections: function(bounds, zoom, prevZoom, expandField, preExpandField) {
         var clusters = [],
-            connections = {},
-            ancestors = this.getAncestors();
+            connections = [];
 
-        for (var i = ancestors.length - 1; i >= 0; --i) {
-            var ancestor = ancestors[i];
-            if (ancestor && (ancestor._zoom + ancestor._zoomRange - 1) < zoom) {
-                findConnections(ancestor, connections);
-            }
+        if (this._geo.boundsIntersects(this._bounds, bounds)) {
+            search(this, null, 0, 0, bounds, false, prevZoom, zoom, expandField, preExpandField, clusters, connections);
         }
-
-        search(this, bounds, zoom, clusters, connections);
 
         return {
             clusters: clusters,
-            connections: flattenConnections(connections, zoom)
+            connections: connections
         };
     }
 });
 
-function search(self, bounds, zoom, clusters, connections) {
+function search(cluster, parent, prevExpandDepth, expandDepth, bounds, isPointId, prevZoom, zoom, expandField, preExpandField, clusters, connections) {
+    expandDepth = Math.max(cluster[expandField] != null ? cluster[expandField] : cluster[preExpandField], expandDepth - 1, 0);
+    prevExpandDepth = Math.max(cluster[preExpandField] != null ? cluster[preExpandField] : cluster[expandField], prevExpandDepth - 1, 0);
 
-    if (!self._geo.boundsIntersects(self._bounds, bounds)) return;
-
-    var inZoomRange = self.isInZoomRange(zoom) && self._state != States.Expanded;
-    var atBottom = !self._children.length || self._state == States.Collapsed;
+    var inZoomRange = (cluster._zoom + cluster._zoomRange - 1) >= zoom && expandDepth == 0;
+    var atBottom = !cluster._children.length || cluster._expandDepth == -1;
 
     if (atBottom || inZoomRange) {
-        clusters.push(self);
+        clusters.push({cluster: cluster, parent: parent});
     } else {
-        findConnections(self, connections);
+        if ((cluster._zoom + cluster._zoomRange - 1) >= prevZoom && prevExpandDepth == 0) {
+            parent = cluster;
+        }
 
-        for (var i = 0; i < self._children.length; ++i) {
-            search(self._children[i], bounds, zoom, clusters, connections);
+        if (connections) {
+            findConnections(cluster, parent, prevExpandDepth, expandDepth, prevZoom, zoom, expandField, preExpandField, connections);
+        }
+
+        for (var i = 0; i < cluster._children.length; ++i) {
+            var child = cluster._children[i];
+            if ((isPointId && child._points[bounds]) || (!isPointId && cluster._geo.boundsIntersects(child._bounds, bounds))) {
+                search(child, parent, prevExpandDepth, expandDepth, bounds, isPointId, prevZoom, zoom, expandField, preExpandField, clusters, connections);
+            }
         }
     }
 
     return clusters;
 }
 
-function findConnections(cluster, connections) {
+function findConnections(cluster, parent, prevExpandDepth, expandDepth, prevZoom, zoom, expandField, preExpandField, connections) {
     for (var i = 0; i < cluster._connections.length; i++) {
         var connection = cluster._connections[i];
-        var p1Connections = connections[connection._pointId1] = connections[connection._pointId1] || {};
-        p1Connections[connection._pointId2] = connection;
-    }
-}
-
-function flattenConnections(connections, zoom) {
-    var flatConnections = [],
-        ids = {},
-        p1Connections, connectionChild, connection;
-
-    for (var point1Id in connections) {
-        if (!connections.hasOwnProperty(point1Id)) continue;
-        p1Connections = connections[point1Id];
-        for (var point2Id in p1Connections) {
-            if (!p1Connections.hasOwnProperty(point2Id)) continue;
-            connection = p1Connections[point2Id];
-            if (!ids[connection._id]) {
-
-                ids[connection._id] = true;
-                flatConnections.push(connection);
-
-                connection._displayCluster1 = connection._cluster._pointToChild[connection._pointId1];
-                connection._displayCluster2 = connection._cluster._pointToChild[connection._pointId2];
-
-                while (connectionChild = getConnectionChild(zoom, connection._displayCluster1, point1Id)) {
-                    connection._displayCluster1 = connectionChild;
-                }
-
-                while (connectionChild = getConnectionChild(zoom, connection._displayCluster2, point2Id)) {
-                    connection._displayCluster2 = connectionChild;
-                }
-            }
-        }
-    }
-    return flatConnections;
-}
-
-function getConnectionChild(zoom, displayCluster1, point1Id) {
-    var inZoomRange = displayCluster1.isInZoomRange(zoom) && displayCluster1._state !== States.Expanded;
-    var atBottom = !displayCluster1._pointToChild[point1Id] || displayCluster1._state === States.Collapsed;
-    if (!inZoomRange && !atBottom) {
-        return displayCluster1._pointToChild[point1Id];
+        connection._displayCluster1 = search(connection._cluster1, parent, prevExpandDepth, expandDepth, connection._pointId1, true, prevZoom, zoom, expandField, preExpandField, [])[0];
+        connection._displayCluster2 = search(connection._cluster2, parent, prevExpandDepth, expandDepth, connection._pointId2, true, prevZoom, zoom, expandField, preExpandField, [])[0];
+        connections.push(connection);
     }
 }
 },{"./cluster.js":2,"./utils.js":8}],4:[function(require,module,exports){
@@ -610,7 +482,7 @@ module.exports = {
         return {_lat: latLng.lat, _lng: latLng.lng}
     },
 
-    getMarketPosition: function(marker) {
+    getMarkerPosition: function(marker) {
         return marker.getLatLng();
     },
 
@@ -670,11 +542,11 @@ module.exports = {
 
     onMapBoundsChange: function(map, callback) {
         map.on('move', callback);
-        return callback;
+        return {thing: map, event: 'move', callback: callback};
     },
 
-    offMapsBoundChange: function(token) {
-        map.off('move', token);
+    off: function(token) {
+        token.thing.off(token.event, token.callback);
     },
 
     getMapZoom: function(map) {
@@ -683,6 +555,11 @@ module.exports = {
 
     getMapBounds: function(map) {
         return map.getBounds();
+    },
+
+    onMarkerClicked: function(marker, callback) {
+        marker.on('click', callback);
+        return {thing: marker, event: 'click', callback: callback};
     }
 };
 
@@ -693,14 +570,6 @@ var wmu = require('./utils.js');
 var Point = require('./point.js');
 var Line = require('./line.js');
 
-var defaults = {
-    animationSteps: 10,
-    animationInterval: 50,
-    debug: false,
-    createMarker: function() {},
-    createPolyline: function() {}
-};
-
 var Markers = function(map, options) {
     var self = this;
 
@@ -708,19 +577,25 @@ var Markers = function(map, options) {
     this._visibleConnections = [];
     this._keepKey = 0;
     this._map = map;
-    this._prevZoom = this._map.getZoom();
+    this._zoom = this._prevZoom = this._map.getZoom();
     this._geo = options.mapConnector || (wm.defaultMapConnector && wm.mapConnectors && wm.mapConnectors[wm.defaultMapConnector]);
-    this._options = wmu.extend({}, defaults, {
+    this._options = wmu.extend({
+        animationSteps: 30,
+        animationInterval: 16,
+        debug: false,
         createMarker: this._geo.createMarker,
         createPolyline: this._geo.createPolyline
     }, options);
-    this._clusterRoot = Cluster.makeRootCluster(this._geo);
+    this._clusterRoot = new Cluster(null, 0, this._geo.maxZoom+1, this._geo, { zoomBoxes: getZoomBoxes(this._geo) } );
+    this._listeners = [];
 
     resetViewport(this);
 
     this._boundsListener = self._geo.onMapBoundsChange(map, function() {
         var zoom = self._geo.getMapZoom(map);
         if (zoom < 0 || zoom > self._geo.maxZoom) return;
+        self._prevZoom = self._zoom;
+        self._zoom = zoom;
 
         resetViewport(self);
 
@@ -730,6 +605,21 @@ var Markers = function(map, options) {
 };
 
 wmu.extend(Markers.prototype, {
+
+    on: function(eventName, callback) {
+        this._listeners.push({event: eventName, callback: callback});
+        return this;
+    },
+
+    off: function(eventName, callback) {
+        for (var i = 0; i < this._listeners.length; ++i) {
+            var listener = this._listeners[i];
+            if (listener.event == eventName && (!callback || callback == listener.callback)) {
+                this._listeners.splice(i--, 1);
+            }
+        }
+        return this;
+    },
 
     addLine: function(line, options) {
         line = Line(line);
@@ -784,32 +674,53 @@ wmu.extend(Markers.prototype, {
             hideConnection(this, this._visibleConnections[i], true);
         }
 
-        if (this._boundsListener) google.maps.event.removeListener(this._boundsListener);
+        if (this._boundsListener) {
+            this._geo.offMapsBoundChange(this._boundsListener);
+        }
     },
 
     setClusterState: function(cluster, state) {
-        var oldState = cluster.getState(),
-            newState = state,
-            nextRoot,
-            root = cluster;
-
-        if (newState == oldState) return;
-
-        if (state == Cluster.States.Normal) {
-
-            while ((nextRoot = root.getParent(true)) && nextRoot.getState() !== Cluster.States.Normal) root = nextRoot;
-            state = oldState == Cluster.States.Collapsed ? Cluster.States.Expanded : Cluster.States.Collapsed;
+        if (state == 'normal') {
+            while (cluster && cluster._expandDepth == 0) cluster = cluster._parent;
         }
 
-        if (state == Cluster.States.Collapsed) {
-            zoomOut(this, root, this._map.getZoom(), root);
-            root.setState(newState, true);
-        } else if (state == Cluster.States.Expanded) {
-            root.setState(newState, true);
-            zoomIn(this, root, this._map.getZoom(), root);
+        if (!cluster) return;
+
+        var oldExpandDepth = cluster._expandDepth,
+            collapse;
+
+        cluster._oldExpandDepth = oldExpandDepth;
+
+        if (state == 'normal') {
+            cluster._expandDepth = 0;
+            if (oldExpandDepth > 0) {
+                collapse = true;
+            } else if (oldExpandDepth < 0) {
+                collapse = false;
+            }
+        } else if (state == 'collapsed') {
+            cluster._expandDepth = -1;
+            collapse = true;
+        } else if (state == 'expanded') {
+            cluster._expandDepth = 1;
+            collapse = false;
         }
+
+        resetViewport(this, collapse);
+
+        delete cluster._oldExpandDepth;
     }
 });
+
+function trigger(self, event, data) {
+    var re = new RegExp('^' + event + '(\\..*)?$');
+    for (var i = 0; i < self._listeners.length; ++i) {
+        var listener = self._listeners[i];
+        if (listener.event.match(re)) {
+            listener.callback(wmu.extend({markers: self}, data));
+        }
+    }
+}
 
 function showCluster(self, cluster, center) {
     cluster._keepKey = self._keepKey;
@@ -817,15 +728,19 @@ function showCluster(self, cluster, center) {
 
     if (!cluster._marker) {
         cluster._marker = self._options.createMarker(cluster);
+        cluster._clickListener = self._geo.onMarkerClicked(cluster._marker, function() {
+            trigger(self, 'clusterClicked', {cluster: cluster});
+        });
     }
 
-    if (!center) center = cluster.getDisplayCenter();
-    self._geo.setMarkerPosition(cluster._marker, center);
+    cluster._dLat = cluster._dLng = null;
 
-    // visible event
+    self._geo.setMarkerPosition(cluster._marker, center || cluster.getDisplayCenter());
+
     if (!cluster._visible) {
         self._geo.showMarker(self._map, cluster._marker);
         cluster._visible = true;
+        trigger(self, 'clusterShown', {cluster: cluster});
     }
 
     return cluster._marker;
@@ -835,249 +750,172 @@ function showConnection(self, connection) {
     connection._keepKey = self._keepKey;
     self._visibleConnections.push(connection);
 
-    if (!connection.polyline) {
-        connection.polyline = self._options.createPolyline(connection._line, connection._cluster1, connection._cluster2);
-    }
+    connection._polyline = connection._polyline || self._options.createPolyline(connection._line);
 
-    self._geo.setPolylinePath(connection.polyline, [
-        connection._displayCluster1.getDisplayCenter(),
-        connection._displayCluster2.getDisplayCenter()
+    self._geo.setPolylinePath(connection._polyline, [
+        connection._displayCluster1.cluster._marker ?
+            self._geo.getMarkerPosition(connection._displayCluster1.cluster._marker) :
+            connection._displayCluster1.cluster.getDisplayCenter(),
+        connection._displayCluster2.cluster._marker ?
+            self._geo.getMarkerPosition(connection._displayCluster2.cluster._marker) :
+            connection._displayCluster2.cluster.getDisplayCenter()
     ]);
 
-    // visible event
     if (!connection._visible) {
-        self._geo.showPolyline(self._map, connection.polyline);
+        self._geo.showPolyline(self._map, connection._polyline);
         connection._visible = true;
+        trigger(self, 'lineShown', {line: connection._line});
     }
 
-    return connection.polyline;
+    return connection._polyline;
 }
 
 function hideCluster(self, cluster, destroy) {
     if (cluster._marker) {
-        // hidden event
         self._geo.hideMarker(self._map, cluster._marker);
         cluster._visible = false;
-        if (destroy) delete cluster._marker;
+        trigger(self, 'clusterHidden', {cluster: cluster});
+        if (destroy) {
+            self._geo.off(cluster._clickListener);
+            delete cluster._marker;
+        }
     }
 }
 
 function hideConnection(self, connection, destroy) {
-    if (connection.polyline) {
-        // hidden event
-        self._geo.hidePolyline(self._map, connection.polyline);
+    if (connection._polyline) {
+        self._geo.hidePolyline(self._map, connection._polyline);
         connection._visible = false;
-        if (destroy) delete connection.polyline;
+        trigger(self, 'lineHidden', {line: connection._line});
+        if (destroy) delete connection._polyline;
     }
 }
 
-function move(self, root) {
-    var i;
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), self._geo.getMapZoom(self._map));
+function move(self) {
+    var i,
+        visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), self._zoom, self._prevZoom, '_expandDepth', '_oldExpandDepth');
+
     for (i = 0; i < visible.clusters.length; ++i) {
-        showCluster(self, visible.clusters[i]);
+        showCluster(self, visible.clusters[i].cluster);
     }
     for (i = 0; i < visible.connections.length; ++i) {
         showConnection(self, visible.connections[i]);
     }
 }
 
-function zoomIn(self, root, zoom, overrideParent) {
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom);
-    var childMarkers = [];
-    var mapZoom = self._geo.getMapZoom(self._map);
-
-    function addChild(parent, child) {
-        parent = overrideParent || parent;
-        if (parent == child) return false;
-        if (overrideParent || parent && parent.getZoomRange().to == mapZoom-1) {
-            var marker = showCluster(self, child, parent.getDisplayCenter());
-            if (!marker) {
-                console.log("Null Marker");
-                return false;
-            }
-
-            var cLatLng = self._geo.getLatLng(child.getDisplayCenter()),
-                pLatLng = self._geo.getLatLng(parent.getDisplayCenter());
-
-            marker.dLat = (cLatLng._lat - pLatLng._lat) / self._options.animationSteps;
-            marker.dLng = (cLatLng._lng - pLatLng._lng) / self._options.animationSteps;
-            marker.inPlace = false;
-            childMarkers.push(marker);
-
-            hideCluster(self, parent);
-            return true;
-        } else {
-            showCluster(self, child);
-            return false;
-        }
-    }
-
-
-    var childrenToAnimate = getChildrenToAnimate(visible, root, addChild);
-    var childPolylines = getPolylinesToAnimate(self, visible.connections, childrenToAnimate);
-
-    animate(self, childMarkers, childPolylines);
+function zoomIn(self) {
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), self._zoom, self._prevZoom, '_expandDepth', '_oldExpandDepth');
+    prepareAnimations(self, visible, false);
 }
 
-function zoomOut(self, root, zoom, overrideParent) {
-    var visible = root.getContainedClustersAndConnections(getSearchBounds(self), zoom);
-    var childMarkers = [];
-    var mapZoom = self._geo.getMapZoom(self._map);
-
-    function addChild(parent, child) {
-        parent = overrideParent || parent;
-        if (parent == child) return false;
-        if (overrideParent || parent && parent.getZoomRange().to == mapZoom) {
-            var marker = showCluster(self, child);
-
-            var cLatLng = self._geo.getLatLng(child.getDisplayCenter()),
-                pLatLng = self._geo.getLatLng(parent.getDisplayCenter());
-
-            marker.dLat = (pLatLng._lat - cLatLng._lat) / self._options.animationSteps;
-            marker.dLng = (pLatLng._lng - cLatLng._lng) / self._options.animationSteps;
-            childMarkers.push(marker);
-
-            return true;
-        } else {
-            showCluster(self, child);
-            return false;
-        }
-    }
-
-    var animatedChildren = getChildrenToAnimate(visible, root, addChild);
-    var animatedPolylines = getPolylinesToAnimate(self, visible.connections, animatedChildren);
-
-    animate(self, childMarkers, animatedPolylines, function() {
-        resetViewport(self);
-    });
+function zoomOut(self) {
+    var visible = self._clusterRoot.getContainedClustersAndConnections(getSearchBounds(self), self._prevZoom, self._zoom, '_oldExpandDepth', '_expandDepth');
+    prepareAnimations(self, visible, true);
 }
 
-function getChildrenToAnimate(visible, root, addChildfn) {
-    var childrenToAnimate = {},
-        i;
-
-    function checkAncestor(descendant, ancestor) {
-        while (descendant) {
-            if (descendant == ancestor) return true;
-            descendant = descendant.getParent();
-        }
-        return false;
-    }
-
-    function add(parent, child, checkRoot) {
-        if (!childrenToAnimate[child._id] && (!checkRoot || checkAncestor(parent, root)) && addChildfn(parent, child)) {
-            //todo make sure the point at the center is above the overs so it doesnt flash
-            //$(child.marker.getElement()).css("z-index", child.getBestPoint() == parent.getBestPoint() ? 100 : null);
-            childrenToAnimate[child._id] = child;
-        }
-    }
+function prepareAnimations(self, visible, collapse) {
+    var i;
 
     for (i = 0; i < visible.clusters.length; ++i) {
-        add(visible.clusters[i]._parent, visible.clusters[i], false);
+        addChildAnimation(self, visible.clusters[i], collapse);
     }
 
-    var check = root._parent !== null;
     for (i = 0; i < visible.connections.length; i++) {
         var connection = visible.connections[i];
-        add(connection._displayCluster1._parent, connection._displayCluster1, check);
-        add(connection._displayCluster2._parent, connection._displayCluster2, check);
+        addChildAnimation(self, connection._displayCluster1, collapse);
+        addChildAnimation(self, connection._displayCluster2, collapse);
+        showConnection(self, connection);
     }
 
-    return childrenToAnimate;
+    animate(self);
 }
 
-function getPolylinesToAnimate(self, connections, animatedClusters) {
-    var toAnimate = [];
-    for (var i = 0; i < connections.length; ++i) {
-        var connection = connections[i],
-            polyline = showConnection(self, connection),
-            cluster1 = animatedClusters[connection._displayCluster1._id],
-            cluster2 = animatedClusters[connection._displayCluster2._id],
-            polyStart = null, polyEnd  = null, polyPath = null;
+function addChildAnimation(self, parentChild, collapse) {
+    var parent = parentChild.parent,
+        child =  parentChild.cluster;
 
-        if (!polyline) continue;
+    // this cluster has already been processed
+    if (child._keepKey == self._keepKey) return;
 
-        polyline.dLat1 = polyline.dLng1 = polyline.dLat2 = polyline.dLng2 = null;
-        if (cluster1) {
-            polyline.dLat1 = cluster1._marker.dLat;
-            polyline.dLng1 = cluster1._marker.dLng;
-            polyStart = self._geo.getMarketPosition(cluster1._marker);
-        }
-        if (cluster2) {
-            polyline.dLat2 = cluster2._marker.dLat;
-            polyline.dLng2 = cluster2._marker.dLng;
-            polyEnd = self._geo.getMarketPosition(cluster2._marker);
-        }
-        if (polyStart || polyEnd) {
-            polyPath = self._geo.getPolylinePath(polyline);
-            polyPath[0] = polyStart || polyPath[0];
-            polyPath[1] = polyEnd || polyPath[1];
-            self._geo.setPolylinePath(polyline, polyPath);
-            toAnimate.push(polyline);
-        }
+    if (parent) {
+        var to = collapse ? parent : child,
+            from = collapse ? child : parent,
+            toLatLng = self._geo.getLatLng(to.getDisplayCenter()),
+            fromLatLng = self._geo.getLatLng(from.getDisplayCenter());
+
+        showCluster(self, child, from.getDisplayCenter());
+
+        child._dLat = (toLatLng._lat - fromLatLng._lat) / self._options.animationSteps;
+        child._dLng = (toLatLng._lng - fromLatLng._lng) / self._options.animationSteps;
+    } else {
+        showCluster(self, child);
     }
-    return toAnimate;
 }
 
-function animate(self, markers, polylines, done) {
-    var steps = 0;
-    self._interval = setInterval(function() {
-        if (steps < self._options.animationSteps) {
-            var i;
-            for (i = 0; i < markers.length; ++i) {
-                var marker = markers[i];
-                var movedLatLng = getMovedLatLng(self, self._geo.getMarketPosition(marker), marker.dLat, marker.dLng);
+function animate(self) {
+    var steps = 0, i,
+        interval = self._options.animationInterval;
+
+    step();
+    function step() {
+        if (steps++ < self._options.animationSteps) {
+            for (i = 0; i < self._visibleClusters.length; ++i) {
+                var cluster = self._visibleClusters[i],
+                    marker = self._visibleClusters[i]._marker;
+                if (!cluster._dLat && !cluster._dLng) continue;
+
+                var movedLatLng = getMovedLatLng(self, self._geo.getMarkerPosition(marker), cluster);
                 self._geo.setMarkerPosition(marker, movedLatLng);
             }
-            for (i = 0; i < polylines.length; ++i) {
-                var polyline = polylines[i];
-                var polyPath = self._geo.getPolylinePath(polyline);
-                if (typeof polyline.dLat1 !== "undefined") {
-                    polyPath[0] = getMovedLatLng(self, polyPath[0], polyline.dLat1, polyline.dLng1);
-                }
-                if (typeof polyline.dLat2 !== "undefined") {
-                    polyPath[1] = getMovedLatLng(self, polyPath[1], polyline.dLat2, polyline.dLng2);
-                }
+
+            for (i = 0; i < self._visibleConnections.length; ++i) {
+                var connection = self._visibleConnections[i],
+                    cluster1 = connection._displayCluster1.cluster,
+                    cluster2 = connection._displayCluster2.cluster;
+
+                if (!cluster1._dLat && !cluster2._dLat && !cluster1._dLng && !cluster2._dLng) continue;
+
+                var polyline = connection._polyline,
+                    polyPath = self._geo.getPolylinePath(polyline);
+
+                polyPath[0] = getMovedLatLng(self, polyPath[0], cluster1);
+                polyPath[1] = getMovedLatLng(self, polyPath[1], cluster2);
                 self._geo.setPolylinePath(polyline, polyPath);
             }
-        } else if (steps == self._options.animationSteps) {
-            clearInterval(self._interval);
-
-            if (done) done();
+            self._timeout = setTimeout(step, interval)
+        } else {
+            resetViewport(self);
         }
-        ++steps;
-    }, self._options.animationInterval);
+    }
 }
 
-function getMovedLatLng(self, oldLatLng, dLat, dLng) {
+function getMovedLatLng(self, oldLatLng, delta) {
+    if (!delta || (!delta._dLat && !delta._dLng)) return oldLatLng;
     var oldPos = self._geo.getLatLng(oldLatLng);
-    return self._geo.createLatLng(oldPos._lat + dLat, oldPos._lng + dLng);
+    return self._geo.createLatLng(oldPos._lat + delta._dLat, oldPos._lng + delta._dLng);
 }
 
-function resetViewport(self) {
-    var i = 0,
-        oldVisibleClusters = self._visibleClusters,
+function resetViewport(self, collapse) {
+    var oldVisibleClusters = self._visibleClusters,
         oldVisibleConnections = self._visibleConnections;
 
     self._keepKey = (self._keepKey + 1) % 0xDEADBEEF; // mod random big value to stop it from overflowing
     self._visibleClusters = [];
     self._visibleConnections = [];
 
-    clearInterval(self._interval);
+    clearTimeout(self._timeout);
 
-    var zoom = self._geo.getMapZoom(self._map);
-    var zoomShift = zoom - self._prevZoom;
-    if (zoomShift == 1) {
-        zoomIn(self, self._clusterRoot, zoom);
-    } else if (zoomShift == -1) {
-        zoomOut(self, self._clusterRoot, zoom+1);
+    if (collapse === false || self._prevZoom < self._zoom) {
+        zoomIn(self);
+    } else if (collapse === true || self._prevZoom > self._zoom) {
+        zoomOut(self);
     } else {
-        move(self, self._clusterRoot);
+        move(self);
     }
 
     // push hiding to the next event loop to fix a small flicker
     setTimeout(function() {
+        var i;
         for (i = 0; i < oldVisibleClusters.length; ++i) {
             var cluster = oldVisibleClusters[i];
             if (cluster._keepKey != self._keepKey) {
@@ -1098,36 +936,25 @@ function resetViewport(self) {
 // and also clamp it to the bounds of the earth.
 function getSearchBounds(self) {
     return self._geo.getMapBounds(self._map);
-
-    var mapBounds = self._map.getBounds();
-    if (!mapBounds) return mapBounds;
-
-    return expandBoundingBox(mapBounds, 4);
 }
 
-function expandBoundingBox(box, factor) {
-    var sw = box.getSouthWest();
-    var ne = box.getNorthEast();
-    var dLat = (ne.lat()-sw.lat())/factor;
-    var dLng = (ne.lng()-sw.lng())/factor;
+function getZoomBoxes(geo) {
+    var zoomBoxes = [],
+        minDis = 84.375,
+        maxDis = 112.6,
+        scale = 1;
 
-    var swLat = Math.max(-90, sw.lat()-dLat);
-    var swLng = sw.lng()-dLng;
-    var neLat = Math.min(90, ne.lat()+dLat);
-    var neLng = ne.lng()+dLng;
-
-    // some google methods break when Lng Span s actually 360 or 0
-    var edge = 180-0.00001;
-    if (neLng - swLng <=0 || neLng - swLng >= 360) {
-        neLng = edge;
-        swLng = -edge;
+    for (var z = 0; z <= geo.maxZoom; z++) {
+        zoomBoxes[z] = {
+            min: (minDis / scale),
+            max: (maxDis / scale)
+        };
+        scale <<= 1;
     }
-
-    return new google.maps.LatLngBounds(
-        new google.maps.LatLng( swLat, swLng ),
-        new google.maps.LatLng( neLat, neLng )
-    );
+    
+    return zoomBoxes;
 }
+
 
 module.exports = Markers;
 },{"./cluster.js":2,"./cluster_search.js":3,"./line.js":4,"./point.js":7,"./utils.js":8}],7:[function(require,module,exports){
