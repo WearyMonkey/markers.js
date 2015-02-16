@@ -307,7 +307,7 @@ function animate(self) {
                     cluster1 = connection._displayCluster1.cluster,
                     cluster2 = connection._displayCluster2.cluster;
 
-                if (!cluster1._dLat && !cluster2._dLat) continue;
+                if (!cluster1._dLat && !cluster2._dLat && !cluster1._dLng && !cluster2._dLng) continue;
 
                 var polyline = connection._polyline,
                     polyPath = self._geo.getPolylinePath(polyline);

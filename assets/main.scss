@@ -4,6 +4,36 @@ html, body {
   width: 100%;
 }
 
+@mixin clusterSize($size) {
+  top: -$size/2;
+  left: -$size/2;
+  width: $size;
+  height: $size;
+}
+
+
+#masthead-map {
+
+  .wm-cluster {
+    position: relative;
+    @include clusterSize(100px);
+    border-radius: 100%;
+    background-size: cover;
+    background-color: red;
+  }
+
+  @for $i from 0 through 20 {
+    &[data-wm-zoom="#{$i}"] {
+      .wm-cluster {
+        $j: 20 - $i;
+        $size: 300000px / ($j*$j*$j);
+        @include clusterSize($size);
+      }
+    }
+  }
+}
+
+
 .masthead {
   background: #000;
 

@@ -66,8 +66,7 @@
 
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPBRMfttHc522RD5kOuXwAXa2aIjC_j_U"> </script>
 <script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.5/mapbox.js'></script>
-<script charset="UTF-8" type="text/javascript" src="http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0">
-</script>
+<script charset="UTF-8" type="text/javascript" src="http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="dist/markers.all.js"></script>
 
@@ -75,25 +74,25 @@
 
 
     var marcoPolo = [
-        new google.maps.LatLng(45.4375,12.33583), // 45°26′15″N 12°20′9″E venice 45.4375 12.3358
-        new google.maps.LatLng(32.92778,35.08167), // 32°55′40″N 35°04′54″E Acre
-        new google.maps.LatLng(41,39.73333), // 41°00′N 39°44′E Trebizond / Trabzon
-        new google.maps.LatLng(33.33333,44.43333), // 33°20′00″N 44°26′00″E Baghdad
-        new google.maps.LatLng(36.19111,44.00917), // 36°11′28″N 44°0′33″E Terbil / Erbil
-        new google.maps.LatLng(27.18333,56.26667), // 27°11′N 56°16′E Ormuz / Bandar Abbas
-        new google.maps.LatLng(36.75,66.9), // 36°45′N 66°54′E Balkh
-        new google.maps.LatLng(39.46667,75.98333), // 39°28′N 75°59′E Kashgar
-        new google.maps.LatLng(36.03333,103.8), // 36°02′N 103°48′E Lanzhou
-        new google.maps.LatLng(47.21028,102.84778), // 47°12′37″N 102°50′52″E karakorum
-        new google.maps.LatLng(39.91389,116.39167), // 39°54′50″N 116°23′30″E Beijing
-        new google.maps.LatLng(30.65861,104.06472), // 30°39′31″N 104°03′53″E Chengdu
-        new google.maps.LatLng(21.16667,94.86667), // 21°10′N 94°52′E Pagan
-        new google.maps.LatLng(30.25,120.16667), // 30°15′N 120°10′E Hangzhou
-        new google.maps.LatLng(1.28333,103.83333), // 1°17′N 103°50′E Singapore
-        new google.maps.LatLng(27.18333,56.26667), // 27°11′N 56°16′E Ormuz / Bandar Abbas
-        new google.maps.LatLng(36.19111,44.00917), // 36°11′28″N 44°0′33″E Terbil / Erbil
-        new google.maps.LatLng(41,39.73333), // 41°00′N 39°44′E Trebizond / Trabzon
-        new google.maps.LatLng(41.0122,28.9760) // 41.0122° N, 28.9760° E constantinople 41.0122 28.9760
+        wm.Point(new google.maps.LatLng(45.4375,12.33583), {images: ['venice1', 'venice2']}), // 45°26′15″N 12°20′9″E venice 45.4375 12.3358
+        wm.Point(new google.maps.LatLng(32.92778,35.08167), {images: ['acre1', 'acre2']}), // 32°55′40″N 35°04′54″E Acre
+        wm.Point(new google.maps.LatLng(41,39.73333), {images: ['trabzon1', 'trabzon2']}), // 41°00′N 39°44′E Trebizond / Trabzon
+        wm.Point(new google.maps.LatLng(33.33333,44.43333), {images: ['baghdad1', 'baghdad2']}), // 33°20′00″N 44°26′00″E Baghdad
+        wm.Point(new google.maps.LatLng(36.19111,44.00917), {images: ['terbil1', 'terbil2']}), // 36°11′28″N 44°0′33″E Terbil / Erbil
+        wm.Point(new google.maps.LatLng(27.18333,56.26667), {images: ['ormuz1']}), // 27°11′N 56°16′E Ormuz / Bandar Abbas
+        wm.Point(new google.maps.LatLng(36.75,66.9), {images: ['balkh1']}), // 36°45′N 66°54′E Balkh
+        wm.Point(new google.maps.LatLng(39.46667,75.98333), {images: ['kashgar1', 'kashgar2', 'kashgar3']}), // 39°28′N 75°59′E Kashgar
+        wm.Point(new google.maps.LatLng(36.03333,103.8), {images: ['lanzhou1', 'lanzhou2']}), // 36°02′N 103°48′E Lanzhou
+        wm.Point(new google.maps.LatLng(47.21028,102.84778), {images: ['karakorum1', 'karakorum2']}), // 47°12′37″N 102°50′52″E karakorum
+        wm.Point(new google.maps.LatLng(39.91389,116.39167), {images: ['beijing1', 'beijing2', 'beijing3']}), // 39°54′50″N 116°23′30″E Beijing
+        wm.Point(new google.maps.LatLng(30.65861,104.06472), {images: ['chengdu1']}), // 30°39′31″N 104°03′53″E Chengdu
+        wm.Point(new google.maps.LatLng(21.16667,94.86667), {images: ['pagan1']}), // 21°10′N 94°52′E Pagan
+        wm.Point(new google.maps.LatLng(30.25,120.16667), {images: ['hangzhou1', 'hangzhou2']}), // 30°15′N 120°10′E Hangzhou
+        wm.Point(new google.maps.LatLng(1.28333,103.83333), {images: ['singapore1', 'singapore2', 'singapore3']}), // 1°17′N 103°50′E Singapore
+        wm.Point(new google.maps.LatLng(27.18333,56.26667), {images: ['ormuz1']}), // 27°11′N 56°16′E Ormuz / Bandar Abbas
+        wm.Point(new google.maps.LatLng(36.19111,44.00917), {images: ['terbil1', 'terbil2']}), // 36°11′28″N 44°0′33″E Terbil / Erbil
+        wm.Point(new google.maps.LatLng(41,39.73333), {images: ['trabzon1', 'trabzon2']}), // 41°00′N 39°44′E Trebizond / Trabzon
+        wm.Point(new google.maps.LatLng(41.0122,28.9760), {images: ['constantinople1']}) // 41.0122° N, 28.9760° E constantinople 41.0122 28.9760
     ];
 
     var mastHeadMap = new google.maps.Map(document.getElementById('masthead-map'), {
@@ -101,11 +100,22 @@
         zoom: 3
     });
 
+    google.maps.event.addListener(mastHeadMap, 'bounds_changed', function() {
+        $("#masthead-map").attr('data-wm-zoom', mastHeadMap.getZoom())
+    });
+
+    function createMarkerEle(points) {
+        var div = document.createElement('div');
+        div.className = "wm-cluster";
+        div.style.backgroundImage = 'url(assets/images/' + points[0].getData().images[0] + '.jpg)';
+        return div;
+    }
+
     google.maps.event.addListenerOnce(mastHeadMap, 'idle', function() {
         var markers = new wm.Markers(mastHeadMap, {
             mapConnector: wm.mapConnectors.google,
             createMarker: function(cluster) {
-                var marker = new google.maps.Marker();
+                var marker = new wm.ext.GoogleCustomMarker(createMarkerEle(cluster.getPoints()));
 
                 google.maps.event.addListener(marker, "rightclick", function() {
                     markers.setClusterState(cluster, 'normal');
