@@ -13,114 +13,115 @@ html, body {
   background-size: cover;
   background-color: #fff; }
 #masthead-map[data-wm-zoom="0"] .wm-cluster {
+  top: -16.19695px;
+  left: -16.19695px;
+  width: 32.39391px;
+  height: 32.39391px; }
+#masthead-map[data-wm-zoom="1"] .wm-cluster {
   top: -18.75px;
   left: -18.75px;
   width: 37.5px;
   height: 37.5px; }
-#masthead-map[data-wm-zoom="1"] .wm-cluster {
+#masthead-map[data-wm-zoom="2"] .wm-cluster {
   top: -21.86908px;
   left: -21.86908px;
   width: 43.73815px;
   height: 43.73815px; }
-#masthead-map[data-wm-zoom="2"] .wm-cluster {
+#masthead-map[data-wm-zoom="3"] .wm-cluster {
   top: -25.72016px;
   left: -25.72016px;
   width: 51.44033px;
   height: 51.44033px; }
-#masthead-map[data-wm-zoom="3"] .wm-cluster {
+#masthead-map[data-wm-zoom="4"] .wm-cluster {
   top: -30.53124px;
   left: -30.53124px;
   width: 61.06249px;
   height: 61.06249px; }
-#masthead-map[data-wm-zoom="4"] .wm-cluster {
+#masthead-map[data-wm-zoom="5"] .wm-cluster {
   top: -36.62109px;
   left: -36.62109px;
   width: 73.24219px;
   height: 73.24219px; }
-#masthead-map[data-wm-zoom="5"] .wm-cluster {
+#masthead-map[data-wm-zoom="6"] .wm-cluster {
   top: -44.44444px;
   left: -44.44444px;
   width: 88.88889px;
   height: 88.88889px; }
-#masthead-map[data-wm-zoom="6"] .wm-cluster {
+#masthead-map[data-wm-zoom="7"] .wm-cluster {
   top: -54.66472px;
   left: -54.66472px;
   width: 109.32945px;
   height: 109.32945px; }
-#masthead-map[data-wm-zoom="7"] .wm-cluster {
+#masthead-map[data-wm-zoom="8"] .wm-cluster {
   top: -68.27492px;
   left: -68.27492px;
   width: 136.54984px;
   height: 136.54984px; }
-#masthead-map[data-wm-zoom="8"] .wm-cluster {
+#masthead-map[data-wm-zoom="9"] .wm-cluster {
   top: -86.80556px;
   left: -86.80556px;
   width: 173.61111px;
   height: 173.61111px; }
-#masthead-map[data-wm-zoom="9"] .wm-cluster {
+#masthead-map[data-wm-zoom="10"] .wm-cluster {
   top: -112.69722px;
   left: -112.69722px;
   width: 225.39444px;
   height: 225.39444px; }
-#masthead-map[data-wm-zoom="10"] .wm-cluster {
+#masthead-map[data-wm-zoom="11"] .wm-cluster {
   top: -150px;
   left: -150px;
   width: 300px;
   height: 300px; }
-#masthead-map[data-wm-zoom="11"] .wm-cluster {
+#masthead-map[data-wm-zoom="12"] .wm-cluster {
   top: -205.76132px;
   left: -205.76132px;
   width: 411.52263px;
   height: 411.52263px; }
-#masthead-map[data-wm-zoom="12"] .wm-cluster {
+#masthead-map[data-wm-zoom="13"] .wm-cluster {
   top: -292.96875px;
   left: -292.96875px;
   width: 585.9375px;
   height: 585.9375px; }
-#masthead-map[data-wm-zoom="13"] .wm-cluster {
+#masthead-map[data-wm-zoom="14"] .wm-cluster {
   top: -437.31778px;
   left: -437.31778px;
   width: 874.63557px;
   height: 874.63557px; }
-#masthead-map[data-wm-zoom="14"] .wm-cluster {
+#masthead-map[data-wm-zoom="15"] .wm-cluster {
   top: -694.44444px;
   left: -694.44444px;
   width: 1388.88889px;
   height: 1388.88889px; }
-#masthead-map[data-wm-zoom="15"] .wm-cluster {
+#masthead-map[data-wm-zoom="16"] .wm-cluster {
   top: -1200px;
   left: -1200px;
   width: 2400px;
   height: 2400px; }
-#masthead-map[data-wm-zoom="16"] .wm-cluster {
+#masthead-map[data-wm-zoom="17"] .wm-cluster {
   top: -2343.75px;
   left: -2343.75px;
   width: 4687.5px;
   height: 4687.5px; }
-#masthead-map[data-wm-zoom="17"] .wm-cluster {
+#masthead-map[data-wm-zoom="18"] .wm-cluster {
   top: -5555.55556px;
   left: -5555.55556px;
   width: 11111.11111px;
   height: 11111.11111px; }
-#masthead-map[data-wm-zoom="18"] .wm-cluster {
+#masthead-map[data-wm-zoom="19"] .wm-cluster {
   top: -18750px;
   left: -18750px;
   width: 37500px;
   height: 37500px; }
-#masthead-map[data-wm-zoom="19"] .wm-cluster {
+#masthead-map[data-wm-zoom="20"] .wm-cluster {
   top: -150000px;
   left: -150000px;
   width: 300000px;
   height: 300000px; }
-#masthead-map[data-wm-zoom="20"] .wm-cluster {
-  top: -Infinity/2;
-  left: -Infinity/2;
-  width: Infinity;
-  height: Infinity; }
 
 .masthead {
   background: #000; }
   .masthead h1 {
+    font-weight: 300;
     color: #fff;
     text-align: center; }
   .masthead #masthead-map {
@@ -129,7 +130,6 @@ html, body {
     background: white; }
 
 .map-sample {
+  position: relative;
   width: 100%;
   height: 300px; }
-  .map-sample.bing {
-    height: 195px; }

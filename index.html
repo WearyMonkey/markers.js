@@ -45,22 +45,23 @@
         <hr class="half-rule">
 
         <div class="row">
-            <div class="col-sm-6">
+            <div class="col-sm-4">
                 <div id="mapbox-map" class="map-sample"></div>
                 <h3>Mapbox</h3>
                 <p>Out of the box <a href="https://www.mapbox.com">Mapbox</a> support</p>
             </div>
-            <div class="col-sm-6">
-                <div id="bing-map" class="map-sample bing"></div>
+            <div class="col-sm-4">
+                <div id="bing-map" class="map-sample"></div>
                 <h3>Bing Maps</h3>
-                <p>Bootstrap easily and efficiently scales your websites and applications with a single code base, from phones to tablets to desktops with CSS media queries.</p>
+                <p></p>
+            </div>
+            <div class="col-sm-4">
+                <div id="google-map" class="map-sample"></div>
+                <h3>Google Maps</h3>
+                <p></p>
             </div>
         </div>
 
-        <hr class="half-rule">
-
-        <p class="lead">Bootstrap is open source. It's hosted, developed, and maintained on GitHub.</p>
-        <a href="https://github.com/twbs/bootstrap" class="btn btn-outline btn-lg">View the GitHub project</a>
     </div>
 </div>
 
@@ -69,104 +70,11 @@
 <script charset="UTF-8" type="text/javascript" src="http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="dist/markers.all.js"></script>
-
-<script>
-
-
-    var marcoPolo = [
-        wm.Point(new google.maps.LatLng(45.4375,12.33583), {images: ['venice1', 'venice2']}), // 45°26′15″N 12°20′9″E venice 45.4375 12.3358
-        wm.Point(new google.maps.LatLng(32.92778,35.08167), {images: ['acre1', 'acre2']}), // 32°55′40″N 35°04′54″E Acre
-        wm.Point(new google.maps.LatLng(41,39.73333), {images: ['trabzon1', 'trabzon2']}), // 41°00′N 39°44′E Trebizond / Trabzon
-        wm.Point(new google.maps.LatLng(33.33333,44.43333), {images: ['baghdad1', 'baghdad2']}), // 33°20′00″N 44°26′00″E Baghdad
-        wm.Point(new google.maps.LatLng(36.19111,44.00917), {images: ['terbil1', 'terbil2']}), // 36°11′28″N 44°0′33″E Terbil / Erbil
-        wm.Point(new google.maps.LatLng(27.18333,56.26667), {images: ['ormuz1']}), // 27°11′N 56°16′E Ormuz / Bandar Abbas
-        wm.Point(new google.maps.LatLng(36.75,66.9), {images: ['balkh1']}), // 36°45′N 66°54′E Balkh
-        wm.Point(new google.maps.LatLng(39.46667,75.98333), {images: ['kashgar1', 'kashgar2', 'kashgar3']}), // 39°28′N 75°59′E Kashgar
-        wm.Point(new google.maps.LatLng(36.03333,103.8), {images: ['lanzhou1', 'lanzhou2']}), // 36°02′N 103°48′E Lanzhou
-        wm.Point(new google.maps.LatLng(47.21028,102.84778), {images: ['karakorum1', 'karakorum2']}), // 47°12′37″N 102°50′52″E karakorum
-        wm.Point(new google.maps.LatLng(39.91389,116.39167), {images: ['beijing1', 'beijing2', 'beijing3']}), // 39°54′50″N 116°23′30″E Beijing
-        wm.Point(new google.maps.LatLng(30.65861,104.06472), {images: ['chengdu1']}), // 30°39′31″N 104°03′53″E Chengdu
-        wm.Point(new google.maps.LatLng(21.16667,94.86667), {images: ['pagan1']}), // 21°10′N 94°52′E Pagan
-        wm.Point(new google.maps.LatLng(30.25,120.16667), {images: ['hangzhou1', 'hangzhou2']}), // 30°15′N 120°10′E Hangzhou
-        wm.Point(new google.maps.LatLng(1.28333,103.83333), {images: ['singapore1', 'singapore2', 'singapore3']}), // 1°17′N 103°50′E Singapore
-        wm.Point(new google.maps.LatLng(27.18333,56.26667), {images: ['ormuz1']}), // 27°11′N 56°16′E Ormuz / Bandar Abbas
-        wm.Point(new google.maps.LatLng(36.19111,44.00917), {images: ['terbil1', 'terbil2']}), // 36°11′28″N 44°0′33″E Terbil / Erbil
-        wm.Point(new google.maps.LatLng(41,39.73333), {images: ['trabzon1', 'trabzon2']}), // 41°00′N 39°44′E Trebizond / Trabzon
-        wm.Point(new google.maps.LatLng(41.0122,28.9760), {images: ['constantinople1']}) // 41.0122° N, 28.9760° E constantinople 41.0122 28.9760
-    ];
-
-    var mastHeadMap = new google.maps.Map(document.getElementById('masthead-map'), {
-        center: { lat: 30, lng: 80},
-        zoom: 3
-    });
-
-    google.maps.event.addListener(mastHeadMap, 'bounds_changed', function() {
-        $("#masthead-map").attr('data-wm-zoom', mastHeadMap.getZoom())
-    });
-
-    function createMarkerEle(points) {
-        var div = document.createElement('div');
-        div.className = "wm-cluster";
-        div.style.backgroundImage = 'url(assets/images/' + points[0].getData().images[0] + '.jpg)';
-        return div;
-    }
-
-    google.maps.event.addListenerOnce(mastHeadMap, 'idle', function() {
-        var markers = new wm.Markers(mastHeadMap, {
-            mapConnector: wm.mapConnectors.google,
-            createMarker: function(cluster) {
-                var marker = new wm.ext.GoogleCustomMarker(createMarkerEle(cluster.getPoints()));
-
-                google.maps.event.addListener(marker, "rightclick", function() {
-                    markers.setClusterState(cluster, 'normal');
-                });
-
-                google.maps.event.addListener(marker, "click", function() {
-                    markers.setClusterState(cluster, 'expanded');
-                });
-
-                return marker;
-            }
-        });
-
-        markers.addLine(marcoPolo, {addPoints: true});
-    });
-
-    L.mapbox.accessToken = 'pk.eyJ1Ijoid2Vhcnltb25rZXkiLCJhIjoiT1FwMnFrRSJ9.S_x0lt1SAs--0W0tVTkJtw';
-    var mapBoxMap = L.mapbox.map('mapbox-map', 'examples.map-i86nkdio')
-        .setView([-34.397, 150.644], 8)
-        .on('ready', function () {
-            var markers = new wm.Markers(mapBoxMap, {
-                mapConnector: wm.mapConnectors.mapbox
-            });
-
-            markers.addLine([
-                L.latLng(-27.4679, 153.0278),
-                L.latLng(-33.86, 151.2094),
-                L.latLng(-33.9167, 151.2500),
-                L.latLng(-33.9121, 151.2629),
-                L.latLng(-33.9461, 151.1772)
-            ], {addPoints: true});
-        });
-
-    var bingMap = new Microsoft.Maps.Map(document.getElementById("bing-map"), {
-        credentials:"Ap2wc7PXX3W7HJAJ5_sqOs2pngVo8SFwyGVTaUGm6oXAGJOnzJ8kwjmtO6HIX9l0",
-        center: new Microsoft.Maps.Location(-34.397, 150.644),
-        zoom: 8
-    });
-
-    var bingMarkers = new wm.Markers(bingMap, {
-        mapConnector: wm.mapConnectors.bing
-    });
-
-    bingMarkers.addLine([
-        new Microsoft.Maps.Location(-27.4679, 153.0278),
-        new Microsoft.Maps.Location(-33.86, 151.2094),
-        new Microsoft.Maps.Location(-33.9167, 151.2500),
-        new Microsoft.Maps.Location(-33.9121, 151.2629),
-        new Microsoft.Maps.Location(-33.9461, 151.1772)
-    ], {addPoints: true});
-</script>
+<script src="src/examples/google-custom-marker.js"></script>
+<script src="src/examples/pictures.js"></script>
+<script src="src/examples/bing.js"></script>
+<script src="src/examples/mapbox.js"></script>
+<script src="src/examples/google.js"></script>
 
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

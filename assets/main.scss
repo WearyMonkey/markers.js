@@ -25,7 +25,7 @@ html, body {
   @for $i from 0 through 20 {
     &[data-wm-zoom="#{$i}"] {
       .wm-cluster {
-        $j: 20 - $i;
+        $j: 21 - $i;
         $size: 300000px / ($j*$j*$j);
         @include clusterSize($size);
       }
@@ -38,6 +38,7 @@ html, body {
   background: #000;
 
   h1 {
+    font-weight: 300;
     color: #fff;
     text-align: center;
   }
@@ -50,10 +51,7 @@ html, body {
 }
 
 .map-sample {
+  position: relative;
   width: 100%;
   height: 300px;
-
-  &.bing {
-    height: 195px;
-  }
 }

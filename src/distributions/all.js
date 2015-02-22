@@ -6,8 +6,5 @@ window.wm = {
         mapbox: require('./../map-connectors/mapbox.js'),
         google: require('./../map-connectors/google.js'),
         bing: require('./../map-connectors/bing.js')
-    },
-    ext: {
-        GoogleCustomMarker: require('../extensions/google-custom-marker.js')
     }
 };
