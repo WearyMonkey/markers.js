@@ -6,17 +6,17 @@ A library for adding animated marker clusters to Google, Mapbox or Bing maps.
 
 [Demos](http://wearymonkey.github.io/animated-marker-clusters/)
 
-- [Features](#)
-- [API](#)
-    - [wm.Marker](#)
-    - [wm.Point](#)
-    - [wm.Line](#)
-    - [wm.Cluster](#)
-- [Installation](#)
-    - [Google](#)
-    - [Bing](#)
-    - [Mapbox](#)
-- [Licensing](#)
+- [Features](#features)
+- [API](#api)
+    - [wm.Marker](#wmmarker)
+    - [wm.Point](#wmpoint)
+    - [wm.Line](#wmline)
+    - [wm.Cluster](#wmcluster)
+- [Installation](#installation)
+    - [Google](#google)
+    - [Bing](#bing)
+    - [Mapbox](#mapbox)
+- [Licensing](#licensing)
 
 ## Features
 
