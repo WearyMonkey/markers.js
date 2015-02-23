@@ -10,6 +10,7 @@ var buffer = require('vinyl-buffer');
 var connect = require('gulp-connect');
 var sourcemaps = require('gulp-sourcemaps');
 var zip = require('gulp-zip');
+var header = require('gulp-header');
 
 gulp.task('all', function() {
     return bundle('all');
@@ -78,6 +79,16 @@ gulp.task('default', ['all', 'google', 'mapbox', 'bing'], function() {
 
 var bundle = function(name) {
 
+    var pkg = require('./bower.json');
+    var banner = ['/**',
+        ' * <%= pkg.name %> - <%= pkg.description %>',
+        ' * @version v<%= pkg.version %>',
+        ' * @link <%= pkg.homepage %>',
+        ' * @license <%= pkg.license %>',
+        ' */',
+        ''].join('\n');
+
+
     var bundler = browserify({
         entries: ['./src/distributions/' + name + '.js'],
         debug: false
@@ -87,8 +98,9 @@ var bundle = function(name) {
         .bundle()
         .pipe(source('markers.' + name + '.js')) // gives streaming vinyl file object
         .pipe(buffer()) // <----- convert from streaming to buffered vinyl file object
+        .pipe(header(banner, { pkg : pkg } ))
         .pipe(gulp.dest('./dist/'))
-        .pipe(uglify())
+        .pipe(uglify({preserveComments: 'some'}))
         .pipe(rename({ extname: '.min.js' }))
         .pipe(gulp.dest('./dist/'))
         .pipe(connect.reload());

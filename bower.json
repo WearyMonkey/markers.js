@@ -1,11 +1,13 @@
 {
   "name": "animated-marker-clusters",
+  "description": "A library for animated marker clusters on Google, Mapbox or Bing maps",
   "version": "0.0.0",
   "authors": [
     "toby <toby.rahilly@gmail.com>"
   ],
+  "homepage": "https://github.com/WearyMonkey/animated-marker-clusters",
+  "keywords": ["maps", "marker", "cluster", "animate", "google maps", "mapbox", "bing maps"],
   "license": "MIT",
-  "private": true,
   "ignore": [
     "**/.*",
     "node_modules",
