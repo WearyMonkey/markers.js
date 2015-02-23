@@ -1,10 +1,8 @@
-# Work in Progress
-
-# Animated Marker Clusters
+# Markers.js
 
 A library for adding animated marker clusters to Google, Mapbox or Bing maps.
 
-[Demos](http://wearymonkey.github.io/animated-marker-clusters/)
+[Demos](http://wearymonkey.github.io/markers.js)
 
 - [Features](#features)
 - [API](#api)
@@ -34,7 +32,7 @@ A library for adding animated marker clusters to Google, Mapbox or Bing maps.
 
 ### wm.Markers
 
-The main class adding animated markers and lines to the map.
+The main class for adding animated markers and lines to the map.
 
 #### Constructor
 
@@ -199,14 +197,14 @@ Returns the zoom levels that this cluster is visible at.
 ## Installation
 
 ```
-bower install animated-marker-clusters
+bower install markersjs
 ```
 
 ### Google
 
 ```html
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=<key>"> </script>
-<script src="bower_components/animated-marker-clusters/dist/markers.google.com"></script>
+<script src="bower_components/markers.js/dist/markers.google.com"></script>
 
 <script>
     var mastHeadMap = new google.maps.Map(document.getElementById('google-map'), {
@@ -230,7 +228,7 @@ bower install animated-marker-clusters
 ### Bing
 ```html
 <script charset="UTF-8" type="text/javascript" src="http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0"></script>
-<script src="bower_components/animated-marker-clusters/dist/markers.google.com"></script>
+<script src="bower_components/markers.js/dist/markers.google.com"></script>
 
 <script>
     var bingMap = new Microsoft.Maps.Map(document.getElementById("bing-map"), {
@@ -252,7 +250,7 @@ bower install animated-marker-clusters
 
 ```html
 <script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.5/mapbox.js'></script>
-<script src="bower_components/animated-marker-clusters/dist/markers.google.com"></script>
+<script src="bower_components/markers.js/dist/markers.google.com"></script>
 
 <script>
     L.mapbox.accessToken = 'key';

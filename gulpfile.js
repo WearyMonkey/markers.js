@@ -82,7 +82,7 @@ gulp.task('version', function() {
 
 gulp.task('default', ['all', 'google', 'mapbox', 'bing', 'version'], function() {
     return gulp.src('./dist/*.js')
-        .pipe(zip('animated-marker-cluster-' + pkg.version + '.zip'))
+        .pipe(zip('markersjs-' + pkg.version + '.zip'))
         .pipe(gulp.dest('dist'))
 });
 
