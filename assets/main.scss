@@ -11,29 +11,6 @@ html, body {
   height: $size;
 }
 
-
-#masthead-map {
-
-  .wm-cluster {
-    position: relative;
-    @include clusterSize(100px);
-    border-radius: 100%;
-    background-size: cover;
-    background-color: #fff;
-  }
-
-  @for $i from 0 through 20 {
-    &[data-wm-zoom="#{$i}"] {
-      .wm-cluster {
-        $j: 21 - $i;
-        $size: 300000px / ($j*$j*$j);
-        @include clusterSize($size);
-      }
-    }
-  }
-}
-
-
 .masthead {
   background: #000;
 
@@ -47,7 +24,40 @@ html, body {
     height: 500px;
     margin: 40px 0;
     background: white;
+
+    .wm-cluster {
+      position: relative;
+      @include clusterSize(100px);
+      border-radius: 100%;
+      background-size: cover;
+      background-color: #fff;
+    }
+
+    @for $i from 0 through 20 {
+      &[data-wm-zoom="#{$i}"] {
+        .wm-cluster {
+          $j: 21 - $i;
+          $size: 350000px / ($j*$j*$j);
+          @include clusterSize($size);
+        }
+      }
+    }
   }
+
+  text-align: center;
+
+  .btn {
+    background: #000;
+    color: #fff;
+    border-color: #fff;
+    margin-bottom: 2rem;
+
+    &:active, &:hover {
+      color: #000;
+      background: #fff;
+    }
+  }
+
 }
 
 .map-sample {

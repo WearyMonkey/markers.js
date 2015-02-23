@@ -4,12 +4,11 @@ window.wm = {
     Point: require('./../point.js'),
     Line: require('./../line.js'),
     mapConnectors: {
-        mapbox: require('./../map-connectors/mapbox.js'),
-        google: require('./../map-connectors/google.js'),
         bing: require('./../map-connectors/bing.js')
-    }
+    },
+    defaultMapConnector: 'bing'
 };
-},{"./../line.js":4,"./../map-connectors/bing.js":5,"./../map-connectors/google.js":6,"./../map-connectors/mapbox.js":7,"./../markers.js":8,"./../point.js":9}],2:[function(require,module,exports){
+},{"./../line.js":4,"./../map-connectors/bing.js":5,"./../markers.js":6,"./../point.js":7}],2:[function(require,module,exports){
 var wmu = require('./utils.js');
 
 var ids = 1;
@@ -368,7 +367,7 @@ function distanceLatLngsSquared(lat1, lng1, lat2, lng2) {
 }
 
 module.exports = Cluster;
-},{"./utils.js":10}],3:[function(require,module,exports){
+},{"./utils.js":8}],3:[function(require,module,exports){
 var wmu = require('./utils.js');
 var Cluster = require('./cluster.js');
 
@@ -425,7 +424,7 @@ function findConnections(cluster, parent, prevExpandDepth, expandDepth, prevZoom
         connections.push(connection);
     }
 }
-},{"./cluster.js":2,"./utils.js":10}],4:[function(require,module,exports){
+},{"./cluster.js":2,"./utils.js":8}],4:[function(require,module,exports){
 var Point = require('./point');
 var wmu = require('./utils.js');
 
@@ -463,7 +462,7 @@ function copyPoints(points) {
 module.exports = Line;
 
 
-},{"./point":9,"./utils.js":10}],5:[function(require,module,exports){
+},{"./point":7,"./utils.js":8}],5:[function(require,module,exports){
 module.exports = {
     maxZoom: 20,
 
@@ -568,208 +567,6 @@ module.exports = {
 };
 
 },{}],6:[function(require,module,exports){
-module.exports = {
-    maxZoom: 20,
-
-    createMarker: function () {
-        return new google.maps.Marker();
-    },
-
-    createPolyline: function() {
-        return new google.maps.Polyline();
-    },
-
-    createLatLng: function(lat, lng) {
-        return new google.maps.LatLng(lat, lng);
-    },
-
-    getLatLng: function(latLng) {
-        return {_lat: latLng.lat(), _lng: latLng.lng()}
-    },
-
-    getMarkerPosition: function(marker) {
-        return marker.getPosition();
-    },
-
-    setMarkerPosition: function(marker, latLng) {
-        marker.setPosition(latLng);
-    },
-
-    getPolylinePath: function(polyline) {
-        return polyline.getPath().getArray().slice();
-    },
-
-    setPolylinePath: function(polyline, latLngs) {
-        polyline.setPath(new google.maps.MVCArray(latLngs));
-    },
-
-    showMarker: function(map, marker) {
-        marker.setMap(map);
-    },
-
-    showPolyline: function(map, polyline) {
-        polyline.setMap(map);
-    },
-
-    hideMarker: function(map, marker) {
-        marker.setMap(null);
-    },
-
-    hidePolyline: function(map, polyline) {
-        polyline.setMap(null);
-    },
-
-    createBounds: function() {
-        return new google.maps.LatLngBounds()
-    },
-
-    extendBounds: function(bounds, latLngOrBounds) {
-        for (var i = 0; i < latLngOrBounds.length; ++i) {
-            var latLngOrBound = latLngOrBounds[i];
-            if (latLngOrBound instanceof google.maps.LatLng) {
-                bounds.extend(latLngOrBound);
-            } else if (latLngOrBound instanceof google.maps.LatLngBounds) {
-                bounds.union(latLngOrBound);
-            }
-        }
-        return bounds;
-    },
-
-    getBoundsCenter: function(bounds) {
-        return bounds.getCenter();
-    },
-
-    boundsIntersects: function(bounds1, bounds2) {
-        return bounds1.intersects(bounds2);
-    },
-
-    getBoundsSpan: function(bounds) {
-        var span = bounds.toSpan();
-        return {_lat: span.lat(), _lng: span.lng()};
-    },
-
-    onMapBoundsChange: function(map, callback) {
-        return google.maps.event.addListener(map, 'bounds_changed', callback);
-    },
-
-    off: function(token) {
-        google.maps.event.removeListener(token);
-    },
-
-    getMapZoom: function(map) {
-        return map.getZoom();
-    },
-
-    getMapBounds: function(map) {
-        return map.getBounds();
-    },
-
-    onMarkerClicked: function(marker, callback) {
-        return google.maps.event.addListener(marker, 'click', callback);
-    }
-};
-},{}],7:[function(require,module,exports){
-module.exports = {
-    maxZoom: 20,
-
-    createMarker: function () {
-        return L.marker();
-    },
-
-    createPolyline: function() {
-        return L.polyline([]);
-    },
-
-    createLatLng: function(lat, lng) {
-        return L.latLng(lat, lng);
-    },
-
-    getLatLng: function(latLng) {
-        return {_lat: latLng.lat, _lng: latLng.lng}
-    },
-
-    getMarkerPosition: function(marker) {
-        return marker.getLatLng();
-    },
-
-    setMarkerPosition: function(marker, latLng) {
-        marker.setLatLng(latLng);
-    },
-
-    getPolylinePath: function(polyline) {
-        return polyline.getLatLngs().slice();
-    },
-
-    setPolylinePath: function(polyline, latLngs) {
-        polyline.setLatLngs(latLngs);
-    },
-
-    showMarker: function(map, marker) {
-        marker.addTo(map);
-    },
-
-    showPolyline: function(map, polyline) {
-        polyline.addTo(map);
-    },
-
-    hideMarker: function(map, marker) {
-        map.removeLayer(marker);
-    },
-
-    hidePolyline: function(map, polyline) {
-        map.removeLayer(polyline);
-    },
-
-    createBounds: function() {
-        return L.latLngBounds([]);
-    },
-
-    extendBounds: function(bounds, latLngOrBounds) {
-        for (var i = 0; i < latLngOrBounds.length; i++) {
-            bounds.extend(latLngOrBounds[i]);
-        }
-        return bounds;
-    },
-
-    getBoundsCenter: function(bounds) {
-        return bounds.getCenter();
-    },
-
-    boundsIntersects: function(bounds1, bounds2) {
-        if (!bounds1.getNorthEast() || !bounds2.getNorthEast()) return false;
-        else return bounds1.intersects(bounds2);
-    },
-
-    getBoundsSpan: function(bounds) {
-        var nw = bounds.getNorthWest() || {lat: 0, lng: 0};
-        var se = bounds.getSouthEast() || {lat: 0, lng: 0};
-        return {_lat: nw.lat - se.lat, _lng: se.lng - nw.lng};
-    },
-
-    onMapBoundsChange: function(map, callback) {
-        map.on('move', callback);
-        return {thing: map, event: 'move', callback: callback};
-    },
-
-    off: function(token) {
-        token.thing.off(token.event, token.callback);
-    },
-
-    getMapZoom: function(map) {
-        return map.getZoom();
-    },
-
-    getMapBounds: function(map) {
-        return map.getBounds();
-    },
-
-    onMarkerClicked: function(marker, callback) {
-        marker.on('click', callback);
-        return {thing: marker, event: 'click', callback: callback};
-    }
-};
-
-},{}],8:[function(require,module,exports){
 var Cluster = require('./cluster.js');
 require('./cluster_search.js');
 var wmu = require('./utils.js');
@@ -1162,7 +959,7 @@ function getZoomBoxes(geo) {
 
 
 module.exports = Markers;
-},{"./cluster.js":2,"./cluster_search.js":3,"./line.js":4,"./point.js":9,"./utils.js":10}],9:[function(require,module,exports){
+},{"./cluster.js":2,"./cluster_search.js":3,"./line.js":4,"./point.js":7,"./utils.js":8}],7:[function(require,module,exports){
 var wmu = require('./utils.js');
 
 var ids = 1;
@@ -1189,7 +986,7 @@ wmu.extend(Point.prototype, {
 });
 
 module.exports = Point;
-},{"./utils.js":10}],10:[function(require,module,exports){
+},{"./utils.js":8}],8:[function(require,module,exports){
 module.exports = {
     extend: function(target) {
         for (var i = 1; i < arguments.length; ++i) {

@@ -9,6 +9,7 @@ var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var connect = require('gulp-connect');
 var sourcemaps = require('gulp-sourcemaps');
+var zip = require('gulp-zip');
 
 gulp.task('all', function() {
     return bundle('all');
@@ -20,6 +21,10 @@ gulp.task('google', function() {
 
 gulp.task('mapbox', function() {
     return bundle('mapbox');
+});
+
+gulp.task('bing', function() {
+    return bundle('bing');
 });
 
 gulp.task('js', function() {
@@ -61,12 +66,14 @@ gulp.task('connect', function() {
     });
 });
 
-gulp.task('dev', ['html', 'sass', 'js', 'watch', 'connect'], function() {
+gulp.task('serve', ['html', 'sass', 'js', 'watch', 'connect'], function() {
 
 });
 
-gulp.task('default', ['all', 'google', 'mapbox'], function() {
-
+gulp.task('default', ['all', 'google', 'mapbox', 'bing'], function() {
+    return gulp.src('./dist/*.js')
+        .pipe(zip('animated-marker-cluster.zip'))
+        .pipe(gulp.dest('dist'))
 });
 
 var bundle = function(name) {

@@ -22,7 +22,7 @@ A library for adding animated marker clusters to Google, Mapbox or Bing maps.
 
 * Clusters animate as they expand and collapse
 * Muliple map provider support (Google, Bing, Mapbox and simlple to add more)
-* Fast, handle 100,000's of markers, only draws what's visible
+* Fast, handle 100,000s of markers, only draws what's visible
 * Connect markers with lines that also animate
 * No library dependencies
 * Small, less than 5kb when gzipped
