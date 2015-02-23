@@ -197,7 +197,7 @@ Returns the zoom levels that this cluster is visible at.
 ## Installation
 
 ```
-bower install markersjs
+bower install markers.js
 ```
 
 ### Google
