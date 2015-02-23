@@ -36,9 +36,7 @@ bower install animated-marker-clusters
     });
 
     google.maps.event.addListenerOnce(mastHeadMap, 'idle', function() {
-        var markers = new wm.Markers(mastHeadMap, {
-            mapConnector: wm.mapConnectors.google
-        });
+        var markers = new wm.Markers(mastHeadMap);
 
         markers.addLine([
             new google.maps.LatLng(-27.4679, 153.0278),
@@ -62,9 +60,7 @@ bower install animated-marker-clusters
         zoom: 10
     });
 
-    var bingMarkers = new wm.Markers(bingMap, {
-        mapConnector: wm.mapConnectors.bing
-    });
+    var bingMarkers = new wm.Markers(bingMap);
 
     bingMarkers.addLine([
         new Microsoft.Maps.Location(-27.4679, 153.0278),
@@ -84,9 +80,7 @@ bower install animated-marker-clusters
     var mapBoxMap = L.mapbox.map('mapbox-map', 'examples.map-i86nkdio')
         .setView([-33.86, 151.2094], 10)
         .on('ready', function () {
-            var markers = new wm.Markers(mapBoxMap, {
-                mapConnector: wm.mapConnectors.mapbox
-            });
+            var markers = new wm.Markers(mapBoxMap);
 
             markers.addLine([
                 L.latLng(-27.4679, 153.0278),
