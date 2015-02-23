@@ -5,11 +5,10 @@ html, body {
 
 .masthead {
   background: #000;
+  color: #fff;
   text-align: center; }
   .masthead h1 {
-    font-weight: 300;
-    color: #fff;
-    text-align: center; }
+    font-weight: 300; }
   .masthead #masthead-map {
     height: 500px;
     margin: 40px 0;

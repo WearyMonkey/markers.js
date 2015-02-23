@@ -11,6 +11,8 @@ var connect = require('gulp-connect');
 var sourcemaps = require('gulp-sourcemaps');
 var zip = require('gulp-zip');
 var header = require('gulp-header');
+var replace = require('gulp-replace');
+var pkg = require('./bower.json');
 
 gulp.task('all', function() {
     return bundle('all');
@@ -71,15 +73,21 @@ gulp.task('serve', ['html', 'sass', 'js', 'watch', 'connect'], function() {
 
 });
 
-gulp.task('default', ['all', 'google', 'mapbox', 'bing'], function() {
+gulp.task('version', function() {
+    return gulp.src(['index.html'])
+        .pipe(replace(/-[^-]*\.zip/, '-' + pkg.version + '.zip'))
+        .pipe(replace(/Download v[^<]*/, 'Download v' + pkg.version))
+        .pipe(gulp.dest('.'));
+});
+
+gulp.task('default', ['all', 'google', 'mapbox', 'bing', 'version'], function() {
     return gulp.src('./dist/*.js')
-        .pipe(zip('animated-marker-cluster.zip'))
+        .pipe(zip('animated-marker-cluster-' + pkg.version + '.zip'))
         .pipe(gulp.dest('dist'))
 });
 
 var bundle = function(name) {
 
-    var pkg = require('./bower.json');
     var banner = ['/**',
         ' * <%= pkg.name %> - <%= pkg.description %>',
         ' * @version v<%= pkg.version %>',

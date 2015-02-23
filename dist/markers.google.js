@@ -1,6 +1,6 @@
 /**
  * animated-marker-clusters - A library for animated marker clusters on Google, Mapbox or Bing maps
- * @version v0.0.0
+ * @version v0.0.1
  * @link https://github.com/WearyMonkey/animated-marker-clusters
  * @license MIT
  */

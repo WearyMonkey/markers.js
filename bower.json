@@ -1,7 +1,7 @@
 {
   "name": "animated-marker-clusters",
   "description": "A library for animated marker clusters on Google, Mapbox or Bing maps",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "authors": [
     "toby <toby.rahilly@gmail.com>"
   ],

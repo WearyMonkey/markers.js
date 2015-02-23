@@ -8,7 +8,7 @@ A library for adding animated marker clusters to Google, Mapbox or Bing maps.
 
 - [Features](#features)
 - [API](#api)
-    - [wm.Marker](#wmmarker)
+    - [wm.Markers](#wmmarker)
     - [wm.Point](#wmpoint)
     - [wm.Line](#wmline)
     - [wm.Cluster](#wmcluster)
@@ -32,7 +32,7 @@ A library for adding animated marker clusters to Google, Mapbox or Bing maps.
 
 ## API
 
-### wm.Marker
+### wm.Markers
 
 The main class adding animated markers and lines to the map.
 
