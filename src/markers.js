@@ -16,7 +16,6 @@ var Markers = function(map, options) {
     this._options = wmu.extend({
         animationSteps: 30,
         animationInterval: 16,
-        debug: false,
         createMarker: this._geo.createMarker,
         createPolyline: this._geo.createPolyline
     }, options);
